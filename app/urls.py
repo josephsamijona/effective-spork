@@ -1,5 +1,4 @@
 # urls.py
-# urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
@@ -55,7 +54,17 @@ urlpatterns = [
     path('dashboard/client/', views.ClientDashboardView.as_view(), name='client_dashboard'),
     path('dashboard/interpreter/', views.InterpreterDashboardView.as_view(), name='interpreter_dashboard'),
     
-    # API endpoints (if needed)
+    # Quote Management (Client)
+    path('quotes/', views.QuoteRequestListView.as_view(), name='quote_list'),
+    path('quotes/create/', views.QuoteRequestCreateView.as_view(), name='quote_create'),
+    path('quotes/<int:pk>/', views.QuoteRequestDetailView.as_view(), name='quote_detail'),
+    path('quotes/<int:pk>/accept/', views.QuoteAcceptView.as_view(), name='quote_accept'),
+    path('quotes/<int:pk>/reject/', views.QuoteRejectView.as_view(), name='quote_reject'),
+    
+    # Assignment Management (Client)
+    path('assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='assignment_detail'),
+    
+    # API endpoints
     path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),
     path('api/notifications/clear-all/', views.ClearAllNotificationsView.as_view(), name='clear_all_notifications'),
 ]

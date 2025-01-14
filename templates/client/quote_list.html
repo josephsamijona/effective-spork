@@ -1,0 +1,350 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}My Quotes - DBD I&T{% endblock %}
+{% block header_title %}My Quotes{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Quick Stats Section */
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Create Quote Button */
+    .create-quote-btn {
+        width: 100%;
+        background: var(--accent-blue);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .create-quote-btn:hover {
+        background: var(--secondary-blue);
+        transform: translateY(-2px);
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .filter-form {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr;
+    }
+
+    /* Status Chips */
+    .status-chips {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+        margin-bottom: 1rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .status-chip {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .status-chip.active {
+        background: var(--accent-blue);
+        border-color: var(--accent-blue);
+    }
+
+    /* Quote Cards */
+    .quote-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .quote-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .quote-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .quote-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .quote-title {
+        font-weight: 600;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .quote-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .quote-status.pending { background: rgba(255, 170, 0, 0.2); color: #FFB020; }
+    .quote-status.processing { background: rgba(88, 103, 221, 0.2); color: #5867DD; }
+    .quote-status.quoted { background: rgba(0, 136, 255, 0.2); color: #0088FF; }
+    .quote-status.accepted { background: rgba(0, 200, 83, 0.2); color: #00C853; }
+    .quote-status.rejected { background: rgba(255, 75, 75, 0.2); color: #FF4B4B; }
+
+    .quote-info {
+        display: grid;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-row {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .info-label {
+        min-width: 90px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .quote-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quote-date {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .view-details {
+        color: var(--accent-blue);
+        font-size: 0.875rem;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    @media (min-width: 768px) {
+        .quick-stats {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .filter-form {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quote-list {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .quote-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="quick-stats">
+    <div class="stat-box">
+        <div class="stat-number">{{ stats.pending_count }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ stats.processing_count }}</div>
+        <div class="stat-label">Processing</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ stats.quoted_count }}</div>
+        <div class="stat-label">Quoted</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ stats.accepted_count }}</div>
+        <div class="stat-label">Accepted</div>
+    </div>
+</div>
+
+<!-- Create Quote Button -->
+<a href="{% url 'quotes:quote_create' %}" class="create-quote-btn">
+    <i class="fas fa-plus"></i>
+    <span>New Quote Request</span>
+</a>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <div class="filter-header">
+        <h3>Filters</h3>
+        <button id="toggleFilters" class="btn-link">
+            <i class="fas fa-filter"></i>
+        </button>
+    </div>
+    
+    <!-- Status Quick Filters -->
+    <div class="status-chips">
+        <div class="status-chip active">All</div>
+        <div class="status-chip">Pending</div>
+        <div class="status-chip">Processing</div>
+        <div class="status-chip">Quoted</div>
+        <div class="status-chip">Accepted</div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <form class="filter-form" method="get">
+        {{ filter_form }}
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+    </form>
+</div>
+
+<!-- Quote List -->
+<div class="quote-list">
+    {% for quote in quotes %}
+    <div class="quote-card">
+        <div class="quote-header">
+            <div class="quote-title">{{ quote.service_type }}</div>
+            <div class="quote-status {{ quote.status|lower }}">{{ quote.get_status_display }}</div>
+        </div>
+        
+        <div class="quote-info">
+            <div class="info-row">
+                <span class="info-label">Date:</span>
+                <span>{{ quote.requested_date|date:"M j, Y" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Duration:</span>
+                <span>{{ quote.duration }} minutes</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Languages:</span>
+                <span>{{ quote.source_language }} → {{ quote.target_language }}</span>
+            </div>
+        </div>
+        
+        <div class="quote-footer">
+            <div class="quote-date">
+                Created {{ quote.created_at|timesince }} ago
+            </div>
+            <a href="{% url 'quotes:quote_detail' quote.pk %}" class="view-details">
+                View Details <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="quote-card" style="grid-column: 1 / -1; text-align: center;">
+        <p style="color: rgba(255, 255, 255, 0.8);">No quotes found matching your criteria.</p>
+        <a href="{% url 'quotes:quote_create' %}" class="btn btn-primary" style="margin-top: 1rem;">
+            Create Your First Quote
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-prev">Previous</a>
+    {% endif %}
+    
+    <span class="current-page">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-next">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle filter section
+    document.getElementById('toggleFilters').addEventListener('click', function() {
+        const filterForm = document.querySelector('.filter-form');
+        filterForm.style.display = filterForm.style.display === 'none' ? 'grid' : 'none';
+    });
+
+    // Status chips functionality
+    const statusChips = document.querySelectorAll('.status-chip');
+    statusChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            statusChips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            // Add filter logic here
+        });
+    });
+</script>
+{% endblock %}
