@@ -1,0 +1,45 @@
+<!-- templates/public/quote_request_success.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Request Submitted - DBD I&T</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <img src="{% static 'logo.png' %}" alt="DBD I&T Logo">
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="login-container fade-in">
+            <div class="login-header">
+                <div class="login-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h1 class="card-title">Quote Request Submitted Successfully!</h1>
+            </div>
+
+            <div class="card text-center">
+                <p class="mb-4">Thank you for your quote request. Our team will review your requirements and get back to you shortly with detailed pricing information.</p>
+                
+                <p class="mb-4">We will send a confirmation email to your provided email address with the details of your request.</p>
+
+                <div class="mt-4">
+                    <a href="/" class="btn btn-primary">Return to Homepage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
