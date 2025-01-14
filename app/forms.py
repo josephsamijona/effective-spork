@@ -2,6 +2,11 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordResetForm
 from .models import User, Client, NotificationPreference, Language
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import datetime, timedelta
+from .models import QuoteRequest, AssignmentFeedback, ServiceType, Language
 
 from .models import PublicQuoteRequest, ServiceType, ContactMessage
 
@@ -272,4 +277,207 @@ class CustomPasswordResetForm(PasswordResetForm):
             'class': 'form-control',
             'placeholder': 'Enter your email'
         })
+    )
+
+
+class QuoteRequestForm(forms.ModelForm):
+    """
+    Form for creating a new quote request
+    """
+    # Additional fields for better UX
+    requested_date = forms.DateTimeField(
+        widget=forms.DateTimeInput(attrs={
+            'class': 'form-control',
+            'type': 'datetime-local',
+            'min': datetime.now().strftime('%Y-%m-%dT%H:%M'),
+        }),
+        help_text="Select your preferred date and time for interpretation"
+    )
+
+    duration = forms.IntegerField(
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '30',
+            'step': '30',
+            'placeholder': '120'
+        }),
+        help_text="Minimum duration is 30 minutes, in 30-minute increments"
+    )
+
+    class Meta:
+        model = QuoteRequest
+        fields = [
+            'service_type',
+            'requested_date',
+            'duration',
+            'location',
+            'city',
+            'state',
+            'zip_code',
+            'source_language',
+            'target_language',
+            'special_requirements'
+        ]
+        widgets = {
+            'service_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter the complete address for interpretation'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'State'
+            }),
+            'zip_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ZIP Code'
+            }),
+            'source_language': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'target_language': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'special_requirements': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Please specify any special requirements or notes...'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter active service types
+        self.fields['service_type'].queryset = ServiceType.objects.filter(is_active=True)
+        
+        # Filter active languages
+        active_languages = Language.objects.filter(is_active=True)
+        self.fields['source_language'].queryset = active_languages
+        self.fields['target_language'].queryset = active_languages
+
+        # Set preferred language if available
+        if user and hasattr(user, 'client_profile'):
+            preferred_language = user.client_profile.preferred_language
+            if preferred_language:
+                self.fields['source_language'].initial = preferred_language
+
+    def clean(self):
+        cleaned_data = super().clean()
+        requested_date = cleaned_data.get('requested_date')
+        duration = cleaned_data.get('duration')
+        source_language = cleaned_data.get('source_language')
+        target_language = cleaned_data.get('target_language')
+
+        # Date validation
+        if requested_date:
+            min_notice = timezone.now() + timedelta(hours=24)
+            if requested_date < min_notice:
+                raise ValidationError(
+                    "Requests must be made at least 24 hours in advance"
+                )
+
+        # Duration validation
+        if duration:
+            if duration < 30:
+                raise ValidationError(
+                    "Minimum duration is 30 minutes"
+                )
+            if duration % 30 != 0:
+                raise ValidationError(
+                    "Duration must be in 30-minute increments"
+                )
+
+        # Language validation
+        if source_language and target_language and source_language == target_language:
+            raise ValidationError(
+                "Source and target languages must be different"
+            )
+
+        return cleaned_data
+
+class QuoteRequestUpdateForm(forms.ModelForm):
+    """
+    Form for updating an existing quote request (limited fields)
+    """
+    class Meta:
+        model = QuoteRequest
+        fields = ['special_requirements']
+        widgets = {
+            'special_requirements': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Update your special requirements or notes...'
+            })
+        }
+
+class AssignmentFeedbackForm(forms.ModelForm):
+    """
+    Form for providing feedback on completed assignments
+    """
+    class Meta:
+        model = AssignmentFeedback
+        fields = ['rating', 'comments']
+        widgets = {
+            'rating': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'max': '5',
+                'step': '1'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Share your experience with the interpretation service...'
+            })
+        }
+
+    def clean_rating(self):
+        rating = self.cleaned_data.get('rating')
+        if rating < 1 or rating > 5:
+            raise ValidationError("Rating must be between 1 and 5 stars")
+        return rating
+
+class QuoteFilterForm(forms.Form):
+    """
+    Form for filtering quotes in the list view
+    """
+    STATUS_CHOICES = [('', 'All Statuses')] + list(QuoteRequest.Status.choices)
+    
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date',
+            'placeholder': 'From'
+        })
+    )
+    
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date',
+            'placeholder': 'To'
+        })
+    )
+
+    service_type = forms.ModelChoiceField(
+        queryset=ServiceType.objects.filter(is_active=True),
+        required=False,
+        empty_label="All Services",
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
