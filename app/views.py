@@ -25,7 +25,11 @@ from django.db.models import Count, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
 from app.models import QuoteRequest, Assignment, Payment, Notification
-
+from django.http import JsonResponse
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from .models import Notification
 
 class PublicQuoteRequestView(CreateView):
     model = PublicQuoteRequest
@@ -335,7 +339,86 @@ class ClientDashboardView(LoginRequiredMixin, UserPassesTestMixin):
         
         return context
 
+class MarkNotificationReadView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Get notification ID from request data
+            notification_id = request.POST.get('notification_id')
+            
+            if not notification_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Notification ID is required'
+                }, status=400)
 
+            # Get notification and verify ownership
+            notification = Notification.objects.get(
+                id=notification_id,
+                recipient=request.user,
+            )
+            
+            # Mark as read
+            notification.read = True
+            notification.read_at = timezone.now()
+            notification.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Notification marked as read',
+                'notification_id': notification_id
+            })
+
+        except Notification.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Notification not found'
+            }, status=404)
+        
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': 'An error occurred'
+            }, status=500)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({
+            'success': False,
+            'message': 'Method not allowed'
+        }, status=405)
+
+class ClearAllNotificationsView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Get all unread notifications for the user
+            notifications = Notification.objects.filter(
+                recipient=request.user,
+                read=False
+            )
+            
+            # Update all notifications
+            count = notifications.count()
+            notifications.update(
+                read=True,
+                read_at=timezone.now()
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': f'{count} notifications marked as read',
+                'count': count
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': 'An error occurred'
+            }, status=500)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({
+            'success': False,
+            'message': 'Method not allowed'
+        }, status=405)
 
 
 
