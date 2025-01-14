@@ -308,3 +308,54 @@ class PublicQuoteRequest(models.Model):
 
     def __str__(self):
         return f"Quote Request from {self.full_name} ({self.company_name})"
+
+# models.py
+
+class NotificationPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='notification_preferences')
+    
+    # Email Notifications
+    email_quote_updates = models.BooleanField(default=True, help_text="Receive email notifications about quote status updates")
+    email_assignment_updates = models.BooleanField(default=True, help_text="Receive email notifications about assignment updates")
+    email_payment_updates = models.BooleanField(default=True, help_text="Receive email notifications about payment status")
+    
+    # SMS Notifications (si implémenté dans le futur)
+    sms_enabled = models.BooleanField(default=False, help_text="Enable SMS notifications")
+    
+    # In-App Notifications
+    quote_notifications = models.BooleanField(default=True, help_text="Receive in-app notifications about quotes")
+    assignment_notifications = models.BooleanField(default=True, help_text="Receive in-app notifications about assignments")
+    payment_notifications = models.BooleanField(default=True, help_text="Receive in-app notifications about payments")
+    system_notifications = models.BooleanField(default=True, help_text="Receive system notifications and updates")
+
+    # Communication Preferences
+    preferred_language = models.ForeignKey(
+        Language, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        help_text="Preferred language for notifications"
+    )
+    
+    # Notification Frequency
+    notification_frequency = models.CharField(
+        max_length=20,
+        choices=[
+            ('immediate', 'Immediate'),
+            ('daily', 'Daily Digest'),
+            ('weekly', 'Weekly Digest')
+        ],
+        default='immediate',
+        help_text="How often to receive notifications"
+    )
+
+    class Meta:
+        verbose_name = "Notification Preference"
+        verbose_name_plural = "Notification Preferences"
+
+    def __str__(self):
+        return f"Notification preferences for {self.user.email}"
+
+    def save(self, *args, **kwargs):
+        if not self.preferred_language and self.user.client_profile:
+            self.preferred_language = self.user.client_profile.preferred_language
+        super().save(*args, **kwargs)
