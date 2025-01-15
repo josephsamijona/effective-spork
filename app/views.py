@@ -39,6 +39,14 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.db.models import Q
+from django.views.generic import UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.contrib.auth.views import PasswordChangeView
+from django.views.generic import TemplateView
+from app.forms import UserProfileForm , ClientProfileForm, CustomPasswordChangeForm
 
 from .models import QuoteRequest, Quote, Assignment
 from .forms import QuoteRequestForm, QuoteFilterForm, AssignmentFeedbackForm
@@ -686,7 +694,44 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
         return self.render_to_response(context)
 
 
+# views.py
 
+class ProfileView(LoginRequiredMixin, TemplateView):
+    """Main profile view that combines user and client profile forms"""
+    template_name = 'profiles/profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_form'] = UserProfileForm(instance=self.request.user)
+        context['client_form'] = ClientProfileForm(instance=self.request.user.client_profile)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user_form = UserProfileForm(request.POST, instance=request.user)
+        client_form = ClientProfileForm(request.POST, instance=request.user.client_profile)
+
+        if user_form.is_valid() and client_form.is_valid():
+            user_form.save()
+            client_form.save()
+            messages.success(request, 'Your profile has been updated successfully.')
+            return redirect('profile')
+        
+        return self.render_to_response(
+            self.get_context_data(
+                user_form=user_form,
+                client_form=client_form
+            )
+        )
+
+class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    """View for changing password"""
+    form_class = CustomPasswordChangeForm
+    template_name = 'profiles/change_password.html'
+    success_url = reverse_lazy('profile')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Your password has been changed successfully.')
+        return super().form_valid(form)
 
 
 

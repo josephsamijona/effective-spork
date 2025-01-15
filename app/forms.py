@@ -7,6 +7,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import QuoteRequest, AssignmentFeedback, ServiceType, Language
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
+from .models import Client, User
 
 from .models import PublicQuoteRequest, ServiceType, ContactMessage
 
@@ -481,3 +484,90 @@ class QuoteFilterForm(forms.Form):
         empty_label="All Services",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    
+# forms.py
+
+
+class UserProfileForm(forms.ModelForm):
+    """Form for updating user's basic information"""
+    first_name = forms.CharField(widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Enter your first name'
+    }))
+    last_name = forms.CharField(widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Enter your last name'
+    }))
+    phone = forms.CharField(widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Enter your phone number'
+    }))
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'phone']
+
+class ClientProfileForm(forms.ModelForm):
+    """Form for updating client's company information"""
+    class Meta:
+        model = Client
+        exclude = ['user', 'credit_limit', 'active']
+        widgets = {
+            'company_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter company name'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter address'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter city'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter state'
+            }),
+            'zip_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter ZIP code'
+            }),
+            'billing_address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter billing address'
+            }),
+            'billing_city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter billing city'
+            }),
+            'billing_state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter billing state'
+            }),
+            'billing_zip_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter billing ZIP code'
+            }),
+            'tax_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter tax ID'
+            }),
+            'preferred_language': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes'
+            })
+        }
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Custom password change form with styling"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'

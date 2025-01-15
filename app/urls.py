@@ -64,6 +64,9 @@ urlpatterns = [
     # Assignment Management (Client)
     path('assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='assignment_detail'),
     
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/password/', views.ProfilePasswordChangeView.as_view(), name='change_password'),
+    
     # API endpoints
     path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),
     path('api/notifications/clear-all/', views.ClearAllNotificationsView.as_view(), name='clear_all_notifications'),

@@ -1,43 +1,16 @@
 {% extends "dashboard/base_dashboard.html" %}
 
-{% block title %}Quote Details - DBD I&T{% endblock %}
-{% block header_title %}Quote Details{% endblock %}
+{% block title %}Quote #{{ quote_request.id }} - DBD I&T{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Main Container */
+    /* Page Container */
     .detail-container {
         max-width: 100%;
         margin: 0 auto;
     }
 
-    /* Status Banner */
-    .status-banner {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .status-label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-    }
-
-    .status-pending { background: rgba(255, 170, 0, 0.2); color: #FFB020; }
-    .status-processing { background: rgba(88, 103, 221, 0.2); color: #5867DD; }
-    .status-quoted { background: rgba(0, 136, 255, 0.2); color: #0088FF; }
-    .status-accepted { background: rgba(0, 200, 83, 0.2); color: #00C853; }
-    .status-rejected { background: rgba(255, 75, 75, 0.2); color: #FF4B4B; }
-
-    /* Information Cards */
+    /* Section Card */
     .info-section {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -47,16 +20,24 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: white;
+    /* Section Header */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 1.5rem;
+    }
+
+    .section-title {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: white;
     }
 
+    /* Info Grid */
     .info-grid {
         display: grid;
         gap: 1rem;
@@ -69,100 +50,54 @@
         }
     }
 
-    .info-item {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .info-label {
-        font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .info-value {
-        font-size: 1rem;
-        color: white;
-        font-weight: 500;
-    }
-
-    /* Timeline */
-    .timeline {
-        position: relative;
-        padding: 2rem 0;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 1rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .timeline-event {
-        position: relative;
-        margin-left: 3rem;
-        margin-bottom: 2rem;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.05);
+    /* Quote Amount Card */
+    .amount-card {
+        background: rgba(0, 200, 83, 0.1);
         border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        text-align: center;
+        margin-top: 1rem;
     }
 
-    .timeline-event::before {
-        content: '';
-        position: absolute;
-        left: -2rem;
-        top: 1.5rem;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        background: var(--accent-blue);
-        border: 2px solid rgba(255, 255, 255, 0.2);
+    .amount-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #00C853;
+        margin: 0.5rem 0;
     }
 
-    .timeline-event.current::before {
-        background: #FFB020;
-    }
-
-    .timeline-event.completed::before {
-        background: #00C853;
-    }
-
-    .event-title {
-        font-weight: 600;
-        color: white;
-        margin-bottom: 0.5rem;
-    }
-
-    .event-date {
-        font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .event-description {
-        margin-top: 0.5rem;
+    .amount-label {
         color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
     }
 
     /* Action Buttons */
-    .action-buttons {
-        display: flex;
+    .quote-actions {
+        display: grid;
         gap: 1rem;
-        margin-top: 1rem;
+        grid-template-columns: 1fr;
+        margin-top: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .quote-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     .btn-accept,
     .btn-reject {
-        flex: 1;
-        padding: 0.75rem;
-        border-radius: 8px;
+        padding: 1rem;
+        border-radius: 12px;
         font-weight: 600;
         text-align: center;
         transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
 
     .btn-accept {
@@ -180,93 +115,78 @@
         transform: translateY(-2px);
     }
 
-    /* Assignment Card */
-    .assignment-card {
+    /* Assignment Preview */
+    .assignment-preview {
         background: rgba(0, 136, 255, 0.1);
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 1.5rem;
-        margin-top: 1.5rem;
-        border: 1px solid rgba(0, 136, 255, 0.2);
-    }
-
-    .assignment-card .info-grid {
         margin-top: 1rem;
-    }
-
-    /* Quote Price Card */
-    .price-card {
-        background: rgba(0, 200, 83, 0.1);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border: 1px solid rgba(0, 200, 83, 0.2);
-    }
-
-    .price-amount {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #00C853;
-        margin: 1rem 0;
+        border: 1px solid rgba(0, 136, 255, 0.2);
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="detail-container">
-    <!-- Status Banner -->
-    <div class="status-banner">
-        <h2>Request #{{ quote_request.id }}</h2>
-        <span class="status-label status-{{ quote_request.status|lower }}">
-            {{ quote_request.get_status_display }}
-        </span>
+    <!-- Header Section -->
+    <div class="info-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-file-alt"></i>
+                Quote Request #{{ quote_request.id }}
+            </h2>
+            {% include 'quotes/partials/_status_badge.html' with status=quote_request.status %}
+        </div>
     </div>
 
     <!-- Service Details -->
     <div class="info-section">
-        <h3 class="section-title">
-            <i class="fas fa-info-circle"></i> Service Details
-        </h3>
+        <div class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Service Details
+        </div>
         <div class="info-grid">
             <div class="info-item">
-                <span class="info-label">Service Type</span>
-                <span class="info-value">{{ quote_request.service_type }}</span>
+                <div class="info-label">Service Type</div>
+                <div class="info-value">{{ quote_request.service_type }}</div>
             </div>
             <div class="info-item">
-                <span class="info-label">Date & Time</span>
-                <span class="info-value">{{ quote_request.requested_date|date:"F j, Y - g:i A" }}</span>
+                <div class="info-label">Requested Date</div>
+                <div class="info-value">{{ quote_request.requested_date|date:"F j, Y - g:i A" }}</div>
             </div>
             <div class="info-item">
-                <span class="info-label">Duration</span>
-                <span class="info-value">{{ quote_request.duration }} minutes</span>
+                <div class="info-label">Duration</div>
+                <div class="info-value">{{ quote_request.duration }} minutes</div>
             </div>
             <div class="info-item">
-                <span class="info-label">Languages</span>
-                <span class="info-value">{{ quote_request.source_language }} → {{ quote_request.target_language }}</span>
+                <div class="info-label">Languages</div>
+                <div class="info-value">{{ quote_request.source_language }} → {{ quote_request.target_language }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Location -->
+    <!-- Location Details -->
     <div class="info-section">
-        <h3 class="section-title">
-            <i class="fas fa-map-marker-alt"></i> Location
-        </h3>
+        <div class="section-title">
+            <i class="fas fa-map-marker-alt"></i>
+            Location Information
+        </div>
         <div class="info-grid">
             <div class="info-item">
-                <span class="info-label">Address</span>
-                <span class="info-value">{{ quote_request.location }}</span>
+                <div class="info-label">Address</div>
+                <div class="info-value">{{ quote_request.location }}</div>
             </div>
             <div class="info-item">
-                <span class="info-label">City</span>
-                <span class="info-value">{{ quote_request.city }}</span>
+                <div class="info-label">City</div>
+                <div class="info-value">{{ quote_request.city }}</div>
             </div>
             <div class="info-item">
-                <span class="info-label">State</span>
-                <span class="info-value">{{ quote_request.state }}</span>
+                <div class="info-label">State</div>
+                <div class="info-value">{{ quote_request.state }}</div>
             </div>
             <div class="info-item">
-                <span class="info-label">ZIP Code</span>
-                <span class="info-value">{{ quote_request.zip_code }}</span>
+                <div class="info-label">ZIP Code</div>
+                <div class="info-value">{{ quote_request.zip_code }}</div>
             </div>
         </div>
     </div>
@@ -274,24 +194,25 @@
     <!-- Quote Details if exists -->
     {% if quote %}
     <div class="info-section">
-        <h3 class="section-title">
-            <i class="fas fa-file-invoice-dollar"></i> Quote Details
-        </h3>
-        <div class="price-card">
-            <div class="info-label">Total Amount</div>
-            <div class="price-amount">${{ quote.amount }}</div>
-            <div class="info-label">Valid Until: {{ quote.valid_until|date:"F j, Y" }}</div>
+        <div class="section-title">
+            <i class="fas fa-file-invoice-dollar"></i>
+            Quote Information
         </div>
-        
+        <div class="amount-card">
+            <div class="amount-label">Total Amount</div>
+            <div class="amount-value">${{ quote.amount|floatformat:2 }}</div>
+            <div class="amount-label">Valid until {{ quote.valid_until|date:"F j, Y" }}</div>
+        </div>
+
         {% if quote.status == 'SENT' %}
-        <div class="action-buttons">
-            <form method="post" action="{% url 'quotes:quote_accept' quote.pk %}" style="flex: 1;">
+        <div class="quote-actions">
+            <form method="post" action="{% url 'quotes:quote_accept' quote.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-accept">
                     <i class="fas fa-check"></i> Accept Quote
                 </button>
             </form>
-            <form method="post" action="{% url 'quotes:quote_reject' quote.pk %}" style="flex: 1;">
+            <form method="post" action="{% url 'quotes:quote_reject' quote.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-reject">
                     <i class="fas fa-times"></i> Reject Quote
@@ -305,52 +226,47 @@
     <!-- Assignment Details if exists -->
     {% if assignment %}
     <div class="info-section">
-        <h3 class="section-title">
-            <i class="fas fa-calendar-check"></i> Assignment Details
-        </h3>
-        <div class="assignment-card">
+        <div class="section-title">
+            <i class="fas fa-calendar-check"></i>
+            Assignment Details
+        </div>
+        <div class="assignment-preview">
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Status</span>
-                    <span class="info-value">{{ assignment.get_status_display }}</span>
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        {% include 'quotes/partials/_status_badge.html' with status=assignment.status %}
+                    </div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Interpreter</span>
-                    <span class="info-value">{{ assignment.interpreter.user.get_full_name }}</span>
+                    <div class="info-label">Interpreter</div>
+                    <div class="info-value">{{ assignment.interpreter.user.get_full_name }}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Start Time</span>
-                    <span class="info-value">{{ assignment.start_time|date:"F j, Y - g:i A" }}</span>
+                    <div class="info-label">Start Time</div>
+                    <div class="info-value">{{ assignment.start_time|date:"F j, Y - g:i A" }}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">End Time</span>
-                    <span class="info-value">{{ assignment.end_time|date:"F j, Y - g:i A" }}</span>
+                    <div class="info-label">End Time</div>
+                    <div class="info-value">{{ assignment.end_time|date:"F j, Y - g:i A" }}</div>
                 </div>
             </div>
-            <a href="{% url 'quotes:assignment_detail' assignment.pk %}" class="btn btn-primary" style="margin-top: 1rem;">
-                View Assignment Details
-            </a>
+            <div style="margin-top: 1rem; text-align: right;">
+                <a href="{% url 'quotes:assignment_detail' assignment.pk %}" class="btn btn-primary">
+                    View Full Assignment Details
+                </a>
+            </div>
         </div>
     </div>
     {% endif %}
 
     <!-- Timeline -->
     <div class="info-section">
-        <h3 class="section-title">
-            <i class="fas fa-history"></i> Timeline
-        </h3>
-        <div class="timeline">
-            {% for event in timeline_events %}
-            <div class="timeline-event {% if event.status == quote_request.status %}current{% endif %} {% if event.completed %}completed{% endif %}">
-                <div class="event-title">{{ event.description }}</div>
-                <div class="event-date">{{ event.date|date:"F j, Y - g:i A" }}</div>
-                {% if event.additional_info %}
-                <div class="event-description">{{ event.additional_info }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
+        <div class="section-title">
+            <i class="fas fa-history"></i>
+            Request Timeline
         </div>
+        {% include 'quotes/partials/_timeline.html' with events=timeline_events current_status=quote_request.status %}
     </div>
-
 </div>
 {% endblock %}
