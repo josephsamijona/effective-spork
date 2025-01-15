@@ -1,4 +1,4 @@
-{% extends "dashboard/base_dashboard.html" %}
+{% extends "base_client.html" %}
 
 {% block title %}Quote #{{ quote_request.id }} - DBD I&T{% endblock %}
 
@@ -135,7 +135,7 @@
                 <i class="fas fa-file-alt"></i>
                 Quote Request #{{ quote_request.id }}
             </h2>
-            {% include 'quotes/partials/_status_badge.html' with status=quote_request.status %}
+            {% include 'client/partials/_status_badge.html' with status=quote_request.status %}
         </div>
     </div>
 
@@ -206,13 +206,13 @@
 
         {% if quote.status == 'SENT' %}
         <div class="quote-actions">
-            <form method="post" action="{% url 'quotes:quote_accept' quote.pk %}">
+            <form method="post" action="{% url 'dbdint:quote_accept' quote.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-accept">
                     <i class="fas fa-check"></i> Accept Quote
                 </button>
             </form>
-            <form method="post" action="{% url 'quotes:quote_reject' quote.pk %}">
+            <form method="post" action="{% url 'dbdint:quote_reject' quote.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-reject">
                     <i class="fas fa-times"></i> Reject Quote
@@ -235,7 +235,7 @@
                 <div class="info-item">
                     <div class="info-label">Status</div>
                     <div class="info-value">
-                        {% include 'quotes/partials/_status_badge.html' with status=assignment.status %}
+                        {% include 'client/partials/_status_badge.html' with status=assignment.status %}
                     </div>
                 </div>
                 <div class="info-item">
@@ -252,7 +252,7 @@
                 </div>
             </div>
             <div style="margin-top: 1rem; text-align: right;">
-                <a href="{% url 'quotes:assignment_detail' assignment.pk %}" class="btn btn-primary">
+                <a href="{% url 'dbdint:assignment_detail' assignment.pk %}" class="btn btn-primary">
                     View Full Assignment Details
                 </a>
             </div>
@@ -266,7 +266,7 @@
             <i class="fas fa-history"></i>
             Request Timeline
         </div>
-        {% include 'quotes/partials/_timeline.html' with events=timeline_events current_status=quote_request.status %}
+        {% include 'client/partials/_timeline.html' with events=timeline_events current_status=quote_request.status %}
     </div>
 </div>
 {% endblock %}

@@ -1,12 +1,12 @@
 <!-- quotes/partials/_quote_card.html -->
 {% comment %}
-Usage: {% include 'quotes/partials/_quote_card.html' with quote=quote %}
+Usage: {% include 'client/partials/_quote_card.html' with quote=quote %}
 {% endcomment %}
 <div class="quote-card">
     <div class="quote-header">
         <div class="quote-title">
             <h3>{{ quote.service_type }}</h3>
-            {% include 'quotes/partials/_status_badge.html' with status=quote.status %}
+            {% include 'client/partials/_status_badge.html' with status=quote.status %}
         </div>
         <div class="quote-datetime">
             {{ quote.requested_date|date:"M j, Y - g:i A" }}
@@ -32,7 +32,7 @@ Usage: {% include 'quotes/partials/_quote_card.html' with quote=quote %}
         <div class="quote-meta">
             Created {{ quote.created_at|timesince }} ago
         </div>
-        <a href="{% url 'quotes:quote_detail' quote.pk %}" class="quote-action">
+        <a href="{% url 'dbdint:quote_detail' quote.pk %}" class="quote-action">
             View Details <i class="fas fa-chevron-right"></i>
         </a>
     </div>

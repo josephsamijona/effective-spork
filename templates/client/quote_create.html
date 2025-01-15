@@ -1,4 +1,4 @@
-{% extends "dashboard/base_dashboard.html" %}
+{% extends "base_client.html" %}
 
 {% block title %}New Quote Request - DBD I&T{% endblock %}
 {% block header_title %}New Quote Request{% endblock %}
@@ -319,7 +319,7 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-            <a href="{% url 'quotes:quote_list' %}" class="btn btn-prev">
+            <a href="{% url 'dbdint:quote_list' %}" class="btn btn-prev">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
             <button type="submit" class="btn btn-submit">

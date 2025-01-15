@@ -194,7 +194,7 @@
                 <span class="notification-count">{{ unread_notifications_count }}</span>
                 {% endif %}
             </div>
-            <a href="{% url 'logout' %}" class="nav-item">
+            <a href="{% url 'dbdint:logout' %}" class="nav-item">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
         </div>
@@ -216,15 +216,15 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="{% url 'client_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}">
+        <a href="{% url 'dbdint:client_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dbdint:client_dashboard' %}active{% endif %}">
             <i class="fas fa-home"></i>
             <span>Home</span>
         </a>
-        <a href="{% url 'create_quote' %}" class="nav-item {% if request.resolver_match.url_name == 'create_quote' %}active{% endif %}">
+        <a href="{% url 'dbdint:client_create_quote' %}" class="nav-item {% if request.resolver_match.url_name == 'dbdint:client_create_quote' %}active{% endif %}">
             <i class="fas fa-file-invoice"></i>
             <span>Quote</span>
         </a>
-        <a href="{% url 'profile_edit' %}" class="nav-item {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
+        <a href="{% url 'dbdint:client_profile_edit' %}" class="nav-item {% if request.resolver_match.url_name == 'dbdint:client_profile_edit' %}active{% endif %}">
             <i class="fas fa-user"></i>
             <span>Profile</span>
         </a>

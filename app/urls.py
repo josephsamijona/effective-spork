@@ -17,9 +17,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='dbdint:home'), name='logout'),
     
     # Client Registration
-    path('register/', views.ClientRegistrationView.as_view(), name='register'),
-    path('register/step2/', views.ClientRegistrationStep2View.as_view(), name='register_step2'),
-    path('register/success/', views.RegistrationSuccessView.as_view(), name='register_success'),
+    path('client/register/', views.ClientRegistrationView.as_view(), name='client_register'),
+    path('client/register/step2/', views.ClientRegistrationStep2View.as_view(), name='client_register_step2'),
+    path('client/register/success/', views.RegistrationSuccessView.as_view(), name='client_register_success'),
     
     # Password Management
     path('password-reset/', 
@@ -47,25 +47,25 @@ urlpatterns = [
          name='password_reset_complete'),
     
     # User Profiles
-    path('profile/edit/', views.ClientProfileUpdateView.as_view(), name='profile_edit'),
+    #path('profile/edit/', views.ClientProfileUpdateView.as_view(), name='profile_edit'),
     path('profile/notifications/', views.NotificationPreferencesView.as_view(), name='notification_preferences'),
     
     # Dashboards
-    path('dashboard/client/', views.ClientDashboardView.as_view(), name='client_dashboard'),
-    path('dashboard/interpreter/', views.InterpreterDashboardView.as_view(), name='interpreter_dashboard'),
+    path('dashboard/client/', views.ClientDashboardView, name='client_dashboard'),
+    path('dashboard/interpreter/', views.InterpreterDashboardView, name='interpreter_dashboard'),
     
     # Quote Management (Client)
-    path('quotes/', views.QuoteRequestListView.as_view(), name='quote_list'),
-    path('quotes/create/', views.QuoteRequestCreateView.as_view(), name='quote_create'),
-    path('quotes/<int:pk>/', views.QuoteRequestDetailView.as_view(), name='quote_detail'),
-    path('quotes/<int:pk>/accept/', views.QuoteAcceptView.as_view(), name='quote_accept'),
-    path('quotes/<int:pk>/reject/', views.QuoteRejectView.as_view(), name='quote_reject'),
+    path('client/quotes/', views.QuoteRequestListView.as_view(), name='client_quote_list'),
+    path('client/quotes/create/', views.QuoteRequestCreateView.as_view(), name='client_quote_create'),
+    path('client/quotes/<int:pk>/', views.QuoteRequestDetailView.as_view(), name='client_quote_detail'),
+    path('client/quotes/<int:pk>/accept/', views.QuoteAcceptView.as_view(), name='client_quote_accept'),
+    path('client/quotes/<int:pk>/reject/', views.QuoteRejectView.as_view(), name='client_quote_reject'),
     
     # Assignment Management (Client)
-    path('assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='assignment_detail'),
+    path('client/assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='client_assignment_detail'),
     
-    path('profile/', views.ProfileView.as_view(), name='profile'),
-    path('profile/password/', views.ProfilePasswordChangeView.as_view(), name='change_password'),
+    path('clienprofile/', views.ProfileView.as_view(), name='profile'),
+    path('client_profile/password/', views.ProfilePasswordChangeView.as_view(), name='client_change_password'),
     
     # API endpoints
     path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),

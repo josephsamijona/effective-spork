@@ -1,5 +1,5 @@
 <!-- templates/profiles/profile.html -->
-{% extends "dashboard/base_dashboard.html" %}
+{% extends "base_client.html" %}
 
 {% block title %}My Profile - DBD I&T{% endblock %}
 {% block header_title %}My Profile{% endblock %}
@@ -194,7 +194,7 @@
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <a href="{% url 'profiles:change_password' %}" class="action-card">
+        <a href="{% url 'dbdint:change_password' %}" class="action-card">
             <div class="action-icon">
                 <i class="fas fa-key"></i>
             </div>

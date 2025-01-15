@@ -1,55 +1,60 @@
 # views.py
-from django.views.generic import CreateView
-from django.views.generic import CreateView, TemplateView
-from django.urls import reverse_lazy, reverse
-from django.urls import reverse_lazy
-from django.contrib import messages
-from django.core.mail import send_mail
+from datetime import timedelta
 from django.conf import settings
-from django.template.loader import render_to_string
-from .forms import PublicQuoteRequestForm, ContactForm, ClientProfileUpdateForm, ClientRegistrationForm1, ClientRegistrationForm2,CustomPasswordResetForm,UserCreationForm, LoginForm,NotificationPreferencesForm
-from .models import PublicQuoteRequest, ContactMessage
-from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import CreateView, UpdateView, FormView, TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import login
-from django.utils.decorators import method_decorator
-from app.models import NotificationPreference, Client, User
-from django.views.decorators.cache import never_cache
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView
-from django.db.models import Count, Sum, Avg
-from django.utils import timezone
-from datetime import timedelta
-from app.models import QuoteRequest, Assignment, Payment, Notification
-from django.http import JsonResponse
-from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils import timezone
-from .models import Notification
-from django.views.generic import ListView, CreateView, DetailView, View
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
-from django.contrib import messages
-from django.utils import timezone
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db.models import Count, Sum, Avg, Q
 from django.http import JsonResponse
-from django.db.models import Q
-from django.views.generic import UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from django.contrib import messages
-from django.shortcuts import redirect
-from django.contrib.auth.views import PasswordChangeView
-from django.views.generic import TemplateView
-from app.forms import UserProfileForm , ClientProfileForm, CustomPasswordChangeForm
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse_lazy, reverse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.cache import never_cache
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
-from .models import QuoteRequest, Quote, Assignment
-from .forms import QuoteRequestForm, QuoteFilterForm, AssignmentFeedbackForm
+from .forms import (
+    AssignmentFeedbackForm,
+    ClientProfileForm,
+    ClientProfileUpdateForm,
+    ClientRegistrationForm1,
+    ClientRegistrationForm2,
+    ContactForm,
+    CustomPasswordChangeForm,
+    CustomPasswordResetForm,
+    LoginForm,
+    NotificationPreferencesForm,
+    PublicQuoteRequestForm,
+    QuoteFilterForm,
+    QuoteRequestForm,
+    UserCreationForm,
+    UserProfileForm,
+)
+
+from .models import (
+    Assignment,
+    Client,
+    ContactMessage,
+    Notification,
+    NotificationPreference,
+    Payment,
+    PublicQuoteRequest,
+    Quote,
+    QuoteRequest,
+    User,
+)
 
 
 class PublicQuoteRequestView(CreateView):
@@ -295,11 +300,11 @@ class RegistrationSuccessView(TemplateView):
     template_name = 'accounts/registration/success.html'
     
     
-# views.py
+
 
 
 class ClientDashboardView(LoginRequiredMixin, UserPassesTestMixin):
-    template_name = 'dashboard/client_dashboard.html'
+    template_name = 'client/home.html'
     
     def test_func(self):
         return self.request.user.role == 'CLIENT'
@@ -454,7 +459,7 @@ class QuoteRequestListView(LoginRequiredMixin, ClientRequiredMixin, ListView):
     Display all quote requests for the client with filtering and pagination
     """
     model = QuoteRequest
-    template_name = 'quotes/quote_list.html'
+    template_name = 'client/quote_list.html'
     context_object_name = 'quotes'
     paginate_by = 10
 
@@ -506,7 +511,7 @@ class QuoteRequestCreateView(LoginRequiredMixin, ClientRequiredMixin, CreateView
     """
     model = QuoteRequest
     form_class = QuoteRequestForm
-    template_name = 'quotes/quote_create.html'
+    template_name = 'client/quote_create.html'
     success_url = reverse_lazy('quote_list')
 
     def get_form_kwargs(self):
@@ -530,7 +535,7 @@ class QuoteRequestDetailView(LoginRequiredMixin, ClientRequiredMixin, DetailView
     Display detailed information about a quote request and its timeline
     """
     model = QuoteRequest
-    template_name = 'quotes/quote_detail.html'
+    template_name = 'client/quote_detail.html'
     context_object_name = 'quote_request'
 
     def get_queryset(self):
@@ -648,7 +653,7 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
     Display assignment details for the client
     """
     model = Assignment
-    template_name = 'quotes/assignment_detail.html'
+    template_name = 'client/assignment_detail.html'
     context_object_name = 'assignment'
 
     def get_queryset(self):
@@ -698,7 +703,7 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     """Main profile view that combines user and client profile forms"""
-    template_name = 'profiles/profile.html'
+    template_name = 'client/profile.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -726,7 +731,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     """View for changing password"""
     form_class = CustomPasswordChangeForm
-    template_name = 'profiles/change_password.html'
+    template_name = 'client/change_password.html'
     success_url = reverse_lazy('profile')
 
     def form_valid(self, form):

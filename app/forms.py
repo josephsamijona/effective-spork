@@ -1,17 +1,21 @@
 # forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordResetForm
-from .models import User, Client, NotificationPreference, Language
-from django import forms
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordResetForm, PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import QuoteRequest, AssignmentFeedback, ServiceType, Language
-from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
-from .models import Client, User
 
-from .models import PublicQuoteRequest, ServiceType, ContactMessage
+from .models import (
+    User,
+    Client,
+    NotificationPreference,
+    Language,
+    QuoteRequest,
+    AssignmentFeedback,
+    ServiceType,
+    PublicQuoteRequest,
+    ContactMessage
+)
 
 class PublicQuoteRequestForm(forms.ModelForm):
     class Meta:

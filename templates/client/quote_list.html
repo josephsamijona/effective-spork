@@ -1,4 +1,4 @@
-{% extends "dashboard/base_dashboard.html" %}
+{% extends "base_client.html" %}
 
 {% block title %}My Quotes - DBD I&T{% endblock %}
 {% block header_title %}My Quotes{% endblock %}
@@ -121,25 +121,25 @@
 </div>
 
 <!-- Create Quote Button -->
-<a href="{% url 'quotes:quote_create' %}" class="create-quote-btn">
+<a href="{% url 'dbdint:quote_create' %}" class="create-quote-btn">
     <i class="fas fa-plus"></i>
     <span>New Quote Request</span>
 </a>
 
 <!-- Filters -->
-{% include 'quotes/partials/_filters.html' with form=filter_form status_choices=status_choices %}
+{% include 'client/partials/_filters.html' with form=filter_form status_choices=status_choices %}
 
 <!-- Quote List -->
 <div class="quote-grid">
     {% for quote in quotes %}
-        {% include 'quotes/partials/_quote_card.html' with quote=quote %}
+        {% include 'client/partials/_quote_card.html' with quote=quote %}
     {% empty %}
         <div class="empty-state" style="grid-column: 1 / -1;">
             <div class="empty-state-icon">
                 <i class="fas fa-file-alt"></i>
             </div>
             <p class="empty-state-text">No quotes found matching your criteria.</p>
-            <a href="{% url 'quotes:quote_create' %}" class="btn btn-primary">
+            <a href="{% url 'dbdint:quote_create' %}" class="btn btn-primary">
                 Create Your First Quote
             </a>
         </div>

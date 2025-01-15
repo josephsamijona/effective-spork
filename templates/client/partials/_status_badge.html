@@ -1,6 +1,6 @@
 <!-- quotes/partials/_status_badge.html -->
 {% comment %}
-Usage: {% include 'quotes/partials/_status_badge.html' with status=quote.status %}
+Usage: {% include 'client/partials/_status_badge.html' with status=quote.status %}
 {% endcomment %}
 <span class="status-badge status-{{ status|lower }}">
     {{ status|get_status_display }}
