@@ -289,15 +289,15 @@
             {% csrf_token %}
 
             <div class="form-group">
-                <label for="{{ form.email.id_for_label }}">Email Address</label>
+                <label for="{{ form.username.id_for_label }}">Email Address</label>
                 <div class="input-group">
-                    {{ form.email }}
+                    {{ form.username }}
                     <i class="fas fa-envelope input-icon"></i>
                 </div>
-                {% if form.email.errors %}
+                {% if form.username.errors %}
                 <div class="error-message">
                     <i class="fas fa-exclamation-circle"></i>
-                    {{ form.email.errors|join:", " }}
+                    {{ form.username.errors|join:", " }}
                 </div>
                 {% endif %}
             </div>
@@ -320,7 +320,7 @@
 
             <div class="footer-links">
                 <a href="{% url 'dbdint:password_reset' %}" class="footer-link">Forgot Password?</a>
-                <a href="{% url 'dbdint:register' %}" class="footer-link">Create Account</a>
+                <a href="{% url 'dbdint:choose_registration' %}" class="footer-link">Create Account</a>
             </div>
         </form>
     </div>

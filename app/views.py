@@ -1,5 +1,5 @@
 # views.py
-from django.contrib.auth.decorators import never_cache
+from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 from django.urls import reverse_lazy

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from .models import User, Interpreter, Language
@@ -117,8 +118,8 @@ class ContactForm(forms.ModelForm):
 ################################client
 # forms.py
 
-class LoginForm(forms.Form):
-    email = forms.EmailField(widget=forms.EmailInput(attrs={
+class LoginForm(AuthenticationForm):
+    username = forms.EmailField(widget=forms.EmailInput(attrs={
         'class': 'form-control',
         'placeholder': 'Enter your email'
     }))
@@ -128,9 +129,9 @@ class LoginForm(forms.Form):
     }))
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.required = True
+        super(LoginForm, self).__init__(*args, **kwargs)
+        # Nous utilisons email comme nom d'utilisateur
+        self.fields['username'].label = 'Email'
 
 class ClientRegistrationForm1(forms.ModelForm):
     """First step: Basic user information"""
@@ -455,11 +456,11 @@ class AssignmentFeedbackForm(forms.ModelForm):
             raise ValidationError("Rating must be between 1 and 5 stars")
         return rating
 
+# forms.py
+
 class QuoteFilterForm(forms.Form):
-    """
-    Form for filtering quotes in the list view
-    """
-    STATUS_CHOICES = [('', 'All Statuses')] + list(QuoteRequest.Status.choices)
+    """Formulaire pour filtrer les quotes"""
+    STATUS_CHOICES = [('', 'All Status')] + list(QuoteRequest.Status.choices)
     
     status = forms.ChoiceField(
         choices=STATUS_CHOICES,
@@ -471,8 +472,7 @@ class QuoteFilterForm(forms.Form):
         required=False,
         widget=forms.DateInput(attrs={
             'class': 'form-control',
-            'type': 'date',
-            'placeholder': 'From'
+            'type': 'date'
         })
     )
     
@@ -480,13 +480,12 @@ class QuoteFilterForm(forms.Form):
         required=False,
         widget=forms.DateInput(attrs={
             'class': 'form-control',
-            'type': 'date',
-            'placeholder': 'To'
+            'type': 'date'
         })
     )
 
     service_type = forms.ModelChoiceField(
-        queryset=ServiceType.objects.filter(is_active=True),
+        queryset=ServiceType.objects.filter(active=True),  # Changé de is_active à active
         required=False,
         empty_label="All Services",
         widget=forms.Select(attrs={'class': 'form-control'})
