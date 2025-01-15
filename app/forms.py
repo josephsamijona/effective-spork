@@ -4,7 +4,10 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, timedelta
-
+from django import forms
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+from .models import User, Interpreter, Language
 from .models import (
     User,
     Client,
@@ -575,3 +578,148 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+            
+            
+            
+################################interpreter
+
+class InterpreterRegistrationForm1(forms.ModelForm):
+    """Formulaire étape 1: Informations de base"""
+    email = forms.EmailField(widget=forms.EmailInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Enter your email'
+    }))
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your password'
+        })
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm your password'
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'phone']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter your first name'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter your last name'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter your phone number'
+            })
+        }
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2:
+            if password1 != password2:
+                raise ValidationError("Passwords don't match")
+            validate_password(password1)
+        return password2
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email is already registered")
+        return email
+
+class InterpreterRegistrationForm2(forms.ModelForm):
+    """Formulaire étape 2: Qualifications professionnelles"""
+    languages = forms.ModelMultipleChoiceField(
+        queryset=Language.objects.filter(is_active=True),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control',
+            'size': '5'
+        }),
+        help_text="Select all languages you can interpret"
+    )
+
+    certifications = forms.JSONField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Example: [{"name": "CCHI", "expiry_date": "2025-01-01"}]'
+        })
+    )
+
+    specialties = forms.JSONField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Example: ["Medical", "Legal"]'
+        })
+    )
+
+    hourly_rate = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Your hourly rate in USD'
+        })
+    )
+
+    class Meta:
+        model = Interpreter
+        fields = ['languages', 'certifications', 'specialties', 'hourly_rate']
+
+    def clean_hourly_rate(self):
+        rate = self.cleaned_data.get('hourly_rate')
+        if rate and rate < 0:
+            raise ValidationError("Hourly rate cannot be negative")
+        return rate
+
+class InterpreterRegistrationForm3(forms.ModelForm):
+    """Formulaire étape 3: Adresse et documents"""
+    class Meta:
+        model = Interpreter
+        fields = ['address', 'city', 'state', 'zip_code', 'w9_on_file']
+        widgets = {
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Enter your complete address'
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'State'
+            }),
+            'zip_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ZIP Code'
+            }),
+            'w9_on_file': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['w9_on_file'].label = "I confirm I will provide a W-9 form"
+        self.fields['w9_on_file'].required = True
+
+    def clean_zip_code(self):
+        zip_code = self.cleaned_data.get('zip_code')
+        if zip_code and not zip_code.isdigit():
+            raise ValidationError("ZIP code must contain only numbers")
+        return zip_code

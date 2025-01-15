@@ -1,4 +1,13 @@
 # views.py
+from django.contrib.auth.decorators import never_cache
+from django.utils.decorators import method_decorator
+from django.views.generic import FormView
+from django.urls import reverse_lazy
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.contrib.auth import login
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import UserPassesTestMixin
 from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
@@ -33,7 +42,7 @@ from .forms import (
     ClientRegistrationForm2,
     ContactForm,
     CustomPasswordChangeForm,
-    CustomPasswordResetForm,
+    CustomPasswordResetForm,InterpreterRegistrationForm1,InterpreterRegistrationForm2,InterpreterRegistrationForm3,
     LoginForm,
     NotificationPreferencesForm,
     PublicQuoteRequestForm,
@@ -55,6 +64,17 @@ from .models import (
     QuoteRequest,
     User,
 )
+
+class ChooseRegistrationTypeView(TemplateView):
+    template_name = 'choose_registration.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.role == 'CLIENT':
+                return redirect('client_dashboard')
+            return redirect('interpreter_dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
 
 
 class PublicQuoteRequestView(CreateView):
@@ -185,13 +205,9 @@ View in admin panel: {self.request.build_absolute_uri(reverse('admin:app_contact
 class ContactSuccessView(TemplateView):
     template_name = 'public/contact_success.html'
     
-    
-#################################CLIENT##################33
-# views.py
-
 
 class CustomLoginView(LoginView):
-    template_name = 'accounts/login.html'
+    template_name = 'login.html'
     form_class = LoginForm
     redirect_authenticated_user = True
 
@@ -203,6 +219,10 @@ class CustomLoginView(LoginView):
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid email or password.')
         return super().form_invalid(form)
+#################################CLIENT##################33
+
+
+
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationView(FormView):
@@ -762,10 +782,127 @@ class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 
 
+#####INTERPRETERDASHBOARD##################################
+from django.contrib.auth.decorators import never_cache
+from django.utils.decorators import method_decorator
+from django.views.generic import FormView
+from django.urls import reverse_lazy
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.contrib.auth import login
+
+@method_decorator(never_cache, name='dispatch')
+class InterpreterRegistrationStep1View(FormView):
+    template_name = 'accounts/registration/interpreter/step1.html'
+    form_class = InterpreterRegistrationForm1
+    success_url = reverse_lazy('interpreter_registration_step2')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('interpreter_dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.request.session['interpreter_registration_step1'] = {
+            'email': form.cleaned_data['email'],
+            'password': form.cleaned_data['password1'],
+            'first_name': form.cleaned_data['first_name'],
+            'last_name': form.cleaned_data['last_name'],
+            'phone': form.cleaned_data['phone']
+        }
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+@method_decorator(never_cache, name='dispatch')
+class InterpreterRegistrationStep2View(FormView):
+    template_name = 'accounts/registration/interpreter/step2.html'
+    form_class = InterpreterRegistrationForm2
+    success_url = reverse_lazy('interpreter_registration_step3')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.session.get('interpreter_registration_step1'):
+            messages.error(request, 'Please complete step 1 first.')
+            return redirect('interpreter_registration_step1')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.request.session['interpreter_registration_step2'] = {
+            'languages': [str(lang.id) for lang in form.cleaned_data['languages']],
+            'certifications': form.cleaned_data['certifications'],
+            'specialties': form.cleaned_data['specialties'],
+            'hourly_rate': str(form.cleaned_data['hourly_rate'])
+        }
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+@method_decorator(never_cache, name='dispatch')
+class InterpreterRegistrationStep3View(FormView):
+    template_name = 'accounts/registration/interpreter/step3.html'
+    form_class = InterpreterRegistrationForm3
+    success_url = reverse_lazy('interpreter_dashboard')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not all([
+            request.session.get('interpreter_registration_step1'),
+            request.session.get('interpreter_registration_step2')
+        ]):
+            messages.error(request, 'Please complete previous steps first.')
+            return redirect('interpreter_registration_step1')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        try:
+            # Récupérer les données des étapes précédentes
+            step1_data = self.request.session['interpreter_registration_step1']
+            step2_data = self.request.session['interpreter_registration_step2']
+
+            # Créer l'utilisateur
+            user = User.objects.create_user(
+                email=step1_data['email'],
+                password=step1_data['password'],
+                first_name=step1_data['first_name'],
+                last_name=step1_data['last_name'],
+                phone=step1_data['phone'],
+                role='INTERPRETER'
+            )
+
+            # Créer le profil d'interprète
+            interpreter = form.save(commit=False)
+            interpreter.user = user
+            interpreter.certifications = step2_data['certifications']
+            interpreter.specialties = step2_data['specialties']
+            interpreter.hourly_rate = step2_data['hourly_rate']
+            interpreter.save()
+
+            # Ajouter les langues
+            for language_id in step2_data['languages']:
+                interpreter.languages.add(language_id)
 
+            # Nettoyer la session
+            del self.request.session['interpreter_registration_step1']
+            del self.request.session['interpreter_registration_step2']
 
+            # Connecter l'utilisateur
+            login(self.request, user)
+            messages.success(
+                self.request, 
+                'Your interpreter account has been created successfully! Our team will review your application.'
+            )
+            return super().form_valid(form)
 
+        except Exception as e:
+            messages.error(self.request, 'An error occurred while creating your account. Please try again.')
+            return redirect('interpreter_registration_step1')
 
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
 
@@ -778,61 +915,6 @@ class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#####INTERPRETERDASHBOARD
 class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
     template_name = 'dashboard/interpreter_dashboard.html'
     
@@ -920,3 +1002,7 @@ class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
         }
         
         return context
+    
+    
+    
+    

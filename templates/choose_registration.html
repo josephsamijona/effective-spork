@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Account Type - DBD I&T</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --secondary-blue: #0066CC;
+            --accent-blue: #0088FF;
+            --success-green: #00C853;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #002147 100%);
+            padding: 2rem;
+            color: white;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0,136,255,0.1) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg) translate(-50%, -50%); }
+            to { transform: rotate(360deg) translate(-50%, -50%); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2rem;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .feature-list i {
+            color: var(--success-green);
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.5s ease;
+        }
+
+        .cta-button:hover::before {
+            transform: translate(-50%, -50%) scale(2);
+        }
+
+        .cta-button:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Choose Your Role at DBD I&T</h1>
+            <p>Join our global network of language professionals and clients. Select the account type that best matches your needs.</p>
+        </header>
+
+        <div class="options-grid">
+            <!-- Client Card -->
+            <div class="option-card">
+                <div class="icon-circle">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h2 class="card-title">Business Client</h2>
+                <p>Perfect for companies and organizations needing interpretation services.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Request interpretation services 24/7</li>
+                    <li><i class="fas fa-check"></i> Access to qualified interpreters</li>
+                    <li><i class="fas fa-check"></i> Real-time booking management</li>
+                    <li><i class="fas fa-check"></i> Detailed service reports</li>
+                    <li><i class="fas fa-check"></i> Multiple payment options</li>
+                </ul>
+                <a href="{% url 'dbdint:client_register' %}" class="cta-button">
+                    Create Client Account <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Interpreter Card -->
+            <div class="option-card">
+                <div class="icon-circle">
+                    <i class="fas fa-language"></i>
+                </div>
+                <h2 class="card-title">Professional Interpreter</h2>
+                <p>For qualified interpreters looking to join our professional network.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Flexible assignment selection</li>
+                    <li><i class="fas fa-check"></i> Competitive compensation</li>
+                    <li><i class="fas fa-check"></i> Professional development</li>
+                    <li><i class="fas fa-check"></i> Scheduling management</li>
+                    <li><i class="fas fa-check"></i> Direct payment processing</li>
+                </ul>
+                <a href="{% url 'interpreter_register' %}" class="cta-button">
+                    Join as Interpreter <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Already have an account? <a href="{% url 'dbdint:login' %}">Sign in here</a></p>
+        </div>
+    </div>
+</body>
+</html>

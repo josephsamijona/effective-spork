@@ -14,6 +14,9 @@ urlpatterns = [
 
     # Authentication
     path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('register/choose/', 
+     views.ChooseRegistrationTypeView.as_view(), 
+     name='choose_registration'),
     path('logout/', auth_views.LogoutView.as_view(next_page='dbdint:home'), name='logout'),
     
     # Client Registration
@@ -67,7 +70,24 @@ urlpatterns = [
     path('clienprofile/', views.ProfileView.as_view(), name='profile'),
     path('client_profile/password/', views.ProfilePasswordChangeView.as_view(), name='client_change_password'),
     
+    #interpreter
+        path(
+        'interpreter/register/', 
+        views.InterpreterRegistrationStep1View.as_view(), 
+        name='interpreter_registration_step1'
+    ),
+    path(
+        'interpreter/register/step2/', 
+        views.InterpreterRegistrationStep2View.as_view(), 
+        name='interpreter_registration_step2'
+    ),
+    path(
+        'interpreter/register/step3/', 
+        views.InterpreterRegistrationStep3View.as_view(), 
+        name='interpreter_registration_step3'
+    ),
     # API endpoints
     path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),
     path('api/notifications/clear-all/', views.ClearAllNotificationsView.as_view(), name='clear_all_notifications'),
+    
 ]
