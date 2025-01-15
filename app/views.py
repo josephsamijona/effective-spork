@@ -219,14 +219,12 @@ class CustomLoginView(LoginView):
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid email or password.')
         return super().form_invalid(form)
-#################################CLIENT##################33
-
-
+#################################CLIENT##################
 
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationView(FormView):
-    template_name = 'accounts/registration/step1.html'
+    template_name = 'client/auth/step1.html'
     form_class = ClientRegistrationForm1
     success_url = reverse_lazy('client_registration_step2')
 
@@ -248,7 +246,7 @@ class ClientRegistrationView(FormView):
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationStep2View(FormView):
-    template_name = 'accounts/registration/step2.html'
+    template_name = 'client/auth/step2.html'
     form_class = ClientRegistrationForm2
     success_url = reverse_lazy('client_dashboard')
 
@@ -287,23 +285,11 @@ class ClientRegistrationStep2View(FormView):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
 
-class ClientProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = Client
-    form_class = ClientProfileUpdateForm
-    template_name = 'accounts/profile/update.html'
-    success_url = reverse_lazy('client_dashboard')
-
-    def get_object(self, queryset=None):
-        return self.request.user.client_profile
-
-    def form_valid(self, form):
-        messages.success(self.request, 'Your profile has been updated successfully!')
-        return super().form_valid(form)
 
 class NotificationPreferencesView(LoginRequiredMixin, UpdateView):
     model = NotificationPreference
     form_class = NotificationPreferencesForm
-    template_name = 'accounts/profile/notifications.html'
+    template_name = 'client/setnotifications.html'
     success_url = reverse_lazy('client_dashboard')
 
     def get_object(self, queryset=None):
@@ -317,7 +303,7 @@ class NotificationPreferencesView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 class RegistrationSuccessView(TemplateView):
-    template_name = 'accounts/registration/success.html'
+    template_name = 'client/auth/success.html'
     
     
 
@@ -747,6 +733,21 @@ class ProfileView(LoginRequiredMixin, TemplateView):
                 client_form=client_form
             )
         )
+        
+        
+class ClientProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = Client
+    form_class = ClientProfileUpdateForm
+    template_name = 'accounts/profile/update.html'
+    success_url = reverse_lazy('client_dashboard')
+
+    def get_object(self, queryset=None):
+        return self.request.user.client_profile
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Your profile has been updated successfully!')
+        return super().form_valid(form)
+
 
 class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     """View for changing password"""
@@ -759,41 +760,11 @@ class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
         return super().form_valid(form)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #####INTERPRETERDASHBOARD##################################
-from django.contrib.auth.decorators import never_cache
-from django.utils.decorators import method_decorator
-from django.views.generic import FormView
-from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.contrib.auth import login
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep1View(FormView):
-    template_name = 'accounts/registration/interpreter/step1.html'
+    template_name = 'trad/auth/step1.html'
     form_class = InterpreterRegistrationForm1
     success_url = reverse_lazy('interpreter_registration_step2')
 
@@ -818,7 +789,7 @@ class InterpreterRegistrationStep1View(FormView):
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep2View(FormView):
-    template_name = 'accounts/registration/interpreter/step2.html'
+    template_name = 'trad/auth/step2.html'
     form_class = InterpreterRegistrationForm2
     success_url = reverse_lazy('interpreter_registration_step3')
 
@@ -843,7 +814,7 @@ class InterpreterRegistrationStep2View(FormView):
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep3View(FormView):
-    template_name = 'accounts/registration/interpreter/step3.html'
+    template_name = 'trad/auth/step3.html'
     form_class = InterpreterRegistrationForm3
     success_url = reverse_lazy('interpreter_dashboard')
 
@@ -905,18 +876,8 @@ class InterpreterRegistrationStep3View(FormView):
         return super().form_invalid(form)
 
 
-
-
-
-
-
-
-
-
-
-
 class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
-    template_name = 'dashboard/interpreter_dashboard.html'
+    template_name = 'trad/home.html'
     
     def test_func(self):
         return self.request.user.role == 'INTERPRETER'

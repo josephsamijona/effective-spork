@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Details - DBD I&T</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/clientregister.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+</head>
+<body>
+    <div class="main-container">
+        <header class="auth-header">
+            <img src="{% static 'images/logo.png' %}" alt="DBD I&T Logo" class="logo">
+        </header>
+
+        <div class="auth-container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="auth-content">
+                <h1 class="auth-title">Company Information</h1>
+                <p class="auth-subtitle">Complete your business profile</p>
+
+                <!-- Progress Steps -->
+                <div class="steps">
+                    <div class="step completed">
+                        <div class="step-number">✓</div>
+                        <div class="step-label">Personal Information</div>
+                    </div>
+                    <div class="step active">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Company Details</div>
+                    </div>
+                </div>
+
+                <form method="POST" class="auth-form" novalidate>
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="{{ form.company_name.id_for_label }}">Company Name*</label>
+                        {{ form.company_name }}
+                        {% if form.company_name.errors %}
+                            <span class="error-message">{{ form.company_name.errors|join:", " }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.address.id_for_label }}">Business Address*</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <span class="error-message">{{ form.address.errors|join:", " }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-grid-thirds">
+                        <div class="form-group">
+                            <label for="{{ form.city.id_for_label }}">City*</label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                                <span class="error-message">{{ form.city.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.state.id_for_label }}">State*</label>
+                            {{ form.state }}
+                            {% if form.state.errors %}
+                                <span class="error-message">{{ form.state.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.zip_code.id_for_label }}">ZIP Code*</label>
+                            {{ form.zip_code }}
+                            {% if form.zip_code.errors %}
+                                <span class="error-message">{{ form.zip_code.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.preferred_language.id_for_label }}">Preferred Language*</label>
+                        {{ form.preferred_language }}
+                        {% if form.preferred_language.errors %}
+                            <span class="error-message">{{ form.preferred_language.errors|join:", " }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'dbdint:client_register' %}" class="btn btn-secondary">Back</a>
+                        <button type="submit" class="btn btn-primary">Complete Registration</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Styles spécifiques à step2.html */
+        .form-grid-thirds {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid-thirds {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>
