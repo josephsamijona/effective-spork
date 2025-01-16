@@ -25,6 +25,26 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import TemplateView
+from django.shortcuts import render, redirect
+from .forms import InterpreterProfileForm, NotificationPreferenceForm, CustomPasswordtradChangeForm
+from django.views.generic import ListView
+from django.http import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+from .models import Notification
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth, TruncYear
+from django.utils import timezone
+from datetime import timedelta
+from decimal import Decimal
+from django.db.models import Q
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -71,8 +91,8 @@ class ChooseRegistrationTypeView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             if request.user.role == 'CLIENT':
-                return redirect('client_dashboard')
-            return redirect('interpreter_dashboard')
+                return redirect('dbdint:client_dashboard')
+            return redirect('dbdint:interpreter_dashboard')
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -81,7 +101,7 @@ class PublicQuoteRequestView(CreateView):
     model = PublicQuoteRequest
     form_class = PublicQuoteRequestForm
     template_name = 'public/quote_request_form.html'
-    success_url = reverse_lazy('quote_request_success')
+    success_url = reverse_lazy('dbdint:quote_request_success')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -113,7 +133,7 @@ class PublicQuoteRequestView(CreateView):
         staff_context = {
             'quote_request': quote_request,
             'admin_url': self.request.build_absolute_uri(
-                reverse('admin:app_publicquoterequest_change', args=[quote_request.id])
+                reverse('dbdint:app_publicquoterequest_change', args=[quote_request.id])
             )
         }
         staff_email_html = render_to_string('emails/quote_request_notification.html', staff_context)
@@ -155,7 +175,7 @@ class ContactView(CreateView):
     model = ContactMessage
     form_class = ContactForm
     template_name = 'public/contact.html'
-    success_url = reverse_lazy('contact_success')
+    success_url = reverse_lazy('dbdint:contact_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -213,8 +233,8 @@ class CustomLoginView(LoginView):
 
     def get_success_url(self):
         if self.request.user.role == 'CLIENT':
-            return reverse_lazy('client_dashboard')
-        return reverse_lazy('interpreter_dashboard')
+            return reverse_lazy('dbdint:client_dashboard')
+        return reverse_lazy('dbdint:interpreter_dashboard')
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid email or password.')
@@ -226,11 +246,11 @@ class CustomLoginView(LoginView):
 class ClientRegistrationView(FormView):
     template_name = 'client/auth/step1.html'
     form_class = ClientRegistrationForm1
-    success_url = reverse_lazy('client_registration_step2')
+    success_url = reverse_lazy('dbdint:client_register_step2')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect('client_dashboard')
+            return redirect('dbdint:client_dashboard')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -248,15 +268,15 @@ class ClientRegistrationView(FormView):
 class ClientRegistrationStep2View(FormView):
     template_name = 'client/auth/step2.html'
     form_class = ClientRegistrationForm2
-    success_url = reverse_lazy('client_dashboard')
+    success_url = reverse_lazy('dbdint:client_dashboard')
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('registration_step1'):
-            return redirect('client_registration')
+        if not request.session.get('dbdint:registration_step1'):
+            return redirect('dbdint:client_register')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        step1_data = self.request.session['registration_step1']
+        step1_data = self.request.session['dbdint:registration_step1']
         
         # Create user
         user = User.objects.create_user(
@@ -274,7 +294,7 @@ class ClientRegistrationStep2View(FormView):
         client.save()
 
         # Clean up session
-        del self.request.session['registration_step1']
+        del self.request.session['dbdint:registration_step1']
 
         # Log the user in
         login(self.request, user)
@@ -290,7 +310,7 @@ class NotificationPreferencesView(LoginRequiredMixin, UpdateView):
     model = NotificationPreference
     form_class = NotificationPreferencesForm
     template_name = 'client/setnotifications.html'
-    success_url = reverse_lazy('client_dashboard')
+    success_url = reverse_lazy('dbdint:client_dashboard')
 
     def get_object(self, queryset=None):
         preference, created = NotificationPreference.objects.get_or_create(
@@ -518,7 +538,7 @@ class QuoteRequestCreateView(LoginRequiredMixin, ClientRequiredMixin, CreateView
     model = QuoteRequest
     form_class = QuoteRequestForm
     template_name = 'client/quote_create.html'
-    success_url = reverse_lazy('quote_list')
+    success_url = reverse_lazy('dbdint:client_quote_list')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -625,11 +645,11 @@ class QuoteAcceptView(LoginRequiredMixin, ClientRequiredMixin, View):
                 request,
                 'Quote accepted successfully. Our team will assign an interpreter shortly.'
             )
-            return redirect('quote_detail', pk=quote.quote_request.pk)
+            return redirect('dbdint:client_quote_detail', pk=quote.quote_request.pk)
 
         except Exception as e:
             messages.error(request, 'An error occurred while accepting the quote.')
-            return redirect('quote_detail', pk=quote.quote_request.pk)
+            return redirect('dbdint:quote_detail', pk=quote.quote_request.pk)
 
 class QuoteRejectView(LoginRequiredMixin, ClientRequiredMixin, View):
     """
@@ -648,11 +668,11 @@ class QuoteRejectView(LoginRequiredMixin, ClientRequiredMixin, View):
             quote.save()
             
             messages.success(request, 'Quote rejected successfully.')
-            return redirect('quote_detail', pk=quote.quote_request.pk)
+            return redirect('dbdint:client_quote_detail', pk=quote.quote_request.pk)
 
         except Exception as e:
             messages.error(request, 'An error occurred while rejecting the quote.')
-            return redirect('quote_detail', pk=quote.quote_request.pk)
+            return redirect('dbdint:quote_detail', pk=quote.quote_request.pk)
 
 class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, DetailView):
     """
@@ -684,11 +704,11 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
         
         if assignment.status != 'COMPLETED':
             messages.error(request, 'Feedback can only be submitted for completed assignments.')
-            return redirect('assignment_detail', pk=assignment.pk)
+            return redirect('dbdint:client_assignment_detail', pk=assignment.pk)
 
         if hasattr(assignment, 'assignmentfeedback'):
             messages.error(request, 'Feedback has already been submitted for this assignment.')
-            return redirect('assignment_detail', pk=assignment.pk)
+            return redirect('dbdint:client_assignment_detail', pk=assignment.pk)
 
         form = AssignmentFeedbackForm(request.POST)
         if form.is_valid():
@@ -698,7 +718,7 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
             feedback.save()
             
             messages.success(request, 'Thank you for your feedback!')
-            return redirect('assignment_detail', pk=assignment.pk)
+            return redirect('dbdint:client_assignment_detail', pk=assignment.pk)
 
         context = self.get_context_data(object=assignment)
         context['feedback_form'] = form
@@ -739,7 +759,7 @@ class ClientProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = Client
     form_class = ClientProfileUpdateForm
     template_name = 'accounts/profile/update.html'
-    success_url = reverse_lazy('client_dashboard')
+    success_url = reverse_lazy('dbdint:client_dashboard')
 
     def get_object(self, queryset=None):
         return self.request.user.client_profile
@@ -766,7 +786,7 @@ class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 class InterpreterRegistrationStep1View(FormView):
     template_name = 'trad/auth/step1.html'
     form_class = InterpreterRegistrationForm1
-    success_url = reverse_lazy('interpreter_registration_step2')
+    success_url = reverse_lazy('dbdint:interpreter_registration_step2')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -774,7 +794,7 @@ class InterpreterRegistrationStep1View(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        self.request.session['interpreter_registration_step1'] = {
+        self.request.session['dbdint:interpreter_registration_step1'] = {
             'email': form.cleaned_data['email'],
             'password': form.cleaned_data['password1'],
             'first_name': form.cleaned_data['first_name'],
@@ -791,16 +811,16 @@ class InterpreterRegistrationStep1View(FormView):
 class InterpreterRegistrationStep2View(FormView):
     template_name = 'trad/auth/step2.html'
     form_class = InterpreterRegistrationForm2
-    success_url = reverse_lazy('interpreter_registration_step3')
+    success_url = reverse_lazy('dbdint:interpreter_registration_step3')
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('interpreter_registration_step1'):
+        if not request.session.get('dbdint:interpreter_registration_step1'):
             messages.error(request, 'Please complete step 1 first.')
-            return redirect('interpreter_registration_step1')
+            return redirect('dbdint:interpreter_registration_step1')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        self.request.session['interpreter_registration_step2'] = {
+        self.request.session['dbdint:interpreter_registration_step2'] = {
             'languages': [str(lang.id) for lang in form.cleaned_data['languages']],
             'certifications': form.cleaned_data['certifications'],
             'specialties': form.cleaned_data['specialties'],
@@ -816,22 +836,22 @@ class InterpreterRegistrationStep2View(FormView):
 class InterpreterRegistrationStep3View(FormView):
     template_name = 'trad/auth/step3.html'
     form_class = InterpreterRegistrationForm3
-    success_url = reverse_lazy('interpreter_dashboard')
+    success_url = reverse_lazy('dbdint:interpreter_dashboard')
 
     def dispatch(self, request, *args, **kwargs):
         if not all([
-            request.session.get('interpreter_registration_step1'),
-            request.session.get('interpreter_registration_step2')
+            request.session.get('dbdint:interpreter_registration_step1'),
+            request.session.get('dbdint:interpreter_registration_step2')
         ]):
             messages.error(request, 'Please complete previous steps first.')
-            return redirect('interpreter_registration_step1')
+            return redirect('dbdint:interpreter_registration_step1')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         try:
             # Récupérer les données des étapes précédentes
-            step1_data = self.request.session['interpreter_registration_step1']
-            step2_data = self.request.session['interpreter_registration_step2']
+            step1_data = self.request.session['dbdint:interpreter_registration_step1']
+            step2_data = self.request.session['dbdint:interpreter_registration_step2']
 
             # Créer l'utilisateur
             user = User.objects.create_user(
@@ -856,8 +876,8 @@ class InterpreterRegistrationStep3View(FormView):
                 interpreter.languages.add(language_id)
 
             # Nettoyer la session
-            del self.request.session['interpreter_registration_step1']
-            del self.request.session['interpreter_registration_step2']
+            del self.request.session['dbdint:interpreter_registration_step1']
+            del self.request.session['dbdint:interpreter_registration_step2']
 
             # Connecter l'utilisateur
             login(self.request, user)
@@ -869,7 +889,7 @@ class InterpreterRegistrationStep3View(FormView):
 
         except Exception as e:
             messages.error(self.request, 'An error occurred while creating your account. Please try again.')
-            return redirect('interpreter_registration_step1')
+            return redirect('dbdint:interpreter_registration_step1')
 
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')
@@ -966,4 +986,508 @@ class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
     
     
     
+# views.py
+
+
+class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin):
+    template_name = 'trad/settings.html'
     
+    def test_func(self):
+        return self.request.user.role == 'INTERPRETER'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        if self.request.POST:
+            context['profile_form'] = InterpreterProfileForm(
+                self.request.POST, 
+                self.request.FILES,
+                user=user,
+                instance=user.interpreter_profile
+            )
+            context['notification_form'] = NotificationPreferenceForm(
+                self.request.POST,
+                instance=user.notification_preferences
+            )
+            context['password_form'] = CustomPasswordtradChangeForm(user, self.request.POST)
+        else:
+            context['profile_form'] = InterpreterProfileForm(
+                user=user,
+                instance=user.interpreter_profile
+            )
+            context['notification_form'] = NotificationPreferenceForm(
+                instance=user.notification_preferences
+            )
+            context['password_form'] = CustomPasswordtradChangeForm(user)
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        action = request.POST.get('action')
+        
+        if action == 'update_profile':
+            profile_form = context['profile_form']
+            if profile_form.is_valid():
+                profile = profile_form.save(commit=False)
+                user = request.user
+                
+                # Mise à jour des informations utilisateur
+                user.first_name = profile_form.cleaned_data['first_name']
+                user.last_name = profile_form.cleaned_data['last_name']
+                user.email = profile_form.cleaned_data['email']
+                user.phone_number = profile_form.cleaned_data['phone_number']
+                user.save()
+                
+                # Mise à jour des informations bancaires
+                bank_info = user.interpreter_profile.bank_info
+                bank_info.bank_name = profile_form.cleaned_data['bank_name']
+                bank_info.account_holder = profile_form.cleaned_data['account_holder']
+                bank_info.account_number = profile_form.cleaned_data['account_number']
+                bank_info.routing_number = profile_form.cleaned_data['routing_number']
+                bank_info.save()
+                
+                profile.save()
+                messages.success(request, 'Profile updated successfully!')
+                return redirect('interpreter_settings')
+                
+        elif action == 'update_notifications':
+            notification_form = context['notification_form']
+            if notification_form.is_valid():
+                notification_form.save()
+                messages.success(request, 'Notification preferences updated successfully!')
+                return redirect('interpreter_settings')
+                
+        elif action == 'change_password':
+            password_form = context['password_form']
+            if password_form.is_valid():
+                password_form.save()
+                messages.success(request, 'Password changed successfully!')
+                return redirect('interpreter_settings')
+        
+        return self.render_to_response(context)
+    
+    
+# views.py
+
+
+class NotificationListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Notification
+    template_name = 'trad/notifications.html'
+    context_object_name = 'notifications'
+    paginate_by = 15
+
+    def test_func(self):
+        return self.request.user.role == 'INTERPRETER'
+
+    def get_queryset(self):
+        return Notification.objects.filter(
+            recipient=self.request.user
+        ).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Grouper les notifications par catégorie
+        context['unread_notifications'] = self.get_queryset().filter(read=False)
+        context['quote_notifications'] = self.get_queryset().filter(
+            Q(type='QUOTE_REQUEST') | Q(type='QUOTE_READY')
+        )
+        context['assignment_notifications'] = self.get_queryset().filter(
+            Q(type='ASSIGNMENT_OFFER') | Q(type='ASSIGNMENT_REMINDER')
+        )
+        context['payment_notifications'] = self.get_queryset().filter(
+            type='PAYMENT_RECEIVED'
+        )
+        context['system_notifications'] = self.get_queryset().filter(
+            type='SYSTEM'
+        )
+        
+        return context
+
+@require_POST
+def mark_notification_as_read(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    notification.read = True
+    notification.save()
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+def mark_all_notifications_as_read(request):
+    Notification.objects.filter(
+        recipient=request.user,
+        read=False
+    ).update(read=True)
+    return JsonResponse({'status': 'success'})
+
+
+# views.py
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
+from django.http import JsonResponse
+
+class InterpreterScheduleView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'trad/schedule.html'
+
+    def test_func(self):
+        return self.request.user.role == 'INTERPRETER'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        interpreter = self.request.user.interpreter_profile
+
+        # Récupérer la date actuelle
+        now = timezone.now()
+        
+        # Prochaines missions (limitées à 5)
+        context['upcoming_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status__in=['CONFIRMED', 'ASSIGNED'],
+            start_time__gte=now
+        ).order_by('start_time')[:5]
+
+        # Missions en cours
+        context['current_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status='IN_PROGRESS'
+        )
+
+        # Statistiques de la semaine
+        week_start = now - timedelta(days=now.weekday())
+        week_end = week_start + timedelta(days=7)
+        weekly_assignments = Assignment.objects.filter(
+            interpreter=interpreter,
+            start_time__range=(week_start, week_end),
+            status__in=['CONFIRMED', 'IN_PROGRESS', 'COMPLETED']
+        )
+
+        context['weekly_stats'] = {
+            'total_assignments': weekly_assignments.count(),
+            'total_hours': sum(
+                (a.end_time - a.start_time).total_seconds() / 3600 
+                for a in weekly_assignments
+            ),
+            'earnings': sum(a.total_interpreter_payment or 0 for a in weekly_assignments)
+        }
+
+        return context
+
+def get_calendar_assignments(request):
+    """Vue API pour récupérer les missions pour le calendrier"""
+    if not request.user.is_authenticated or request.user.role != 'INTERPRETER':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    interpreter = request.user.interpreter_profile
+
+    assignments = Assignment.objects.filter(
+        interpreter=interpreter,
+        start_time__range=[start, end]
+    ).select_related('client', 'service_type')
+
+    events = []
+    status_colors = {
+        'PENDING': '#FFA500',    # Orange
+        'ASSIGNED': '#4299e1',   # Bleu clair
+        'CONFIRMED': '#48bb78',  # Vert
+        'IN_PROGRESS': '#805ad5', # Violet
+        'COMPLETED': '#718096',  # Gris
+        'CANCELLED': '#f56565',  # Rouge
+        'NO_SHOW': '#ed8936',    # Orange foncé
+    }
+
+    for assignment in assignments:
+        events.append({
+            'id': assignment.id,
+            'title': f"{assignment.client.full_name} - {assignment.service_type.name}",
+            'start': assignment.start_time.isoformat(),
+            'end': assignment.end_time.isoformat(),
+            'backgroundColor': status_colors[assignment.status],
+            'borderColor': status_colors[assignment.status],
+            'extendedProps': {
+                'status': assignment.status,
+                'location': assignment.location,
+                'city': assignment.city,
+                'languages': f"{assignment.source_language.name} → {assignment.target_language.name}",
+                'rate': float(assignment.interpreter_rate),
+                'hours': (assignment.end_time - assignment.start_time).total_seconds() / 3600,
+                'total_payment': float(assignment.total_interpreter_payment or 0),
+                'special_requirements': assignment.special_requirements or 'None'
+            }
+        })
+
+    return JsonResponse(events, safe=False)
+
+
+
+class AssignmentListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    template_name = 'trad/assignments.html'
+    context_object_name = 'assignments'
+
+    def test_func(self):
+        return self.request.user.role == 'INTERPRETER'
+
+    def get_queryset(self):
+        return Assignment.objects.filter(
+            interpreter=self.request.user.interpreter_profile
+        ).exclude(
+            status__in=['CANCELLED', 'NO_SHOW']
+        ).order_by('start_time')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        interpreter = self.request.user.interpreter_profile
+        
+        # Missions en attente de confirmation
+        context['pending_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status='PENDING'
+        ).order_by('start_time')
+        
+        # Missions à venir (confirmées)
+        context['upcoming_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status='CONFIRMED',
+            start_time__gt=timezone.now()
+        ).order_by('start_time')
+        
+        # Missions en cours
+        context['in_progress_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status='IN_PROGRESS'
+        ).order_by('start_time')
+        
+        # Missions terminées (derniers 30 jours)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        context['completed_assignments'] = Assignment.objects.filter(
+            interpreter=interpreter,
+            status='COMPLETED',
+            completed_at__gte=thirty_days_ago
+        ).order_by('-completed_at')
+        
+        return context
+
+class AssignmentDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Assignment
+    template_name = 'trad/assignment_detail.html'
+    context_object_name = 'assignment'
+
+    def test_func(self):
+        assignment = self.get_object()
+        return self.request.user.interpreter_profile == assignment.interpreter
+
+@require_POST
+def accept_assignment(request, pk):
+    assignment = get_object_or_404(Assignment, pk=pk)
+    
+    if assignment.interpreter != request.user.interpreter_profile:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    if assignment.status != 'PENDING':
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+    assignment.status = 'CONFIRMED'
+    assignment.save()
+    
+    # Créer une notification pour le client
+    Notification.objects.create(
+        recipient=assignment.client.user,
+        type='ASSIGNMENT_ACCEPTED',
+        title='Interpreter accepted your assignment',
+        content=f'Your interpreter has confirmed the assignment for {assignment.start_time.strftime("%B %d, %Y at %I:%M %p")}'
+    )
+    
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+def reject_assignment(request, pk):
+    assignment = get_object_or_404(Assignment, pk=pk)
+    
+    if assignment.interpreter != request.user.interpreter_profile:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    if assignment.status != 'PENDING':
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+    assignment.status = 'CANCELLED'
+    assignment.save()
+    
+    # Notification pour le client
+    Notification.objects.create(
+        recipient=assignment.client.user,
+        type='ASSIGNMENT_REJECTED',
+        title='Interpreter declined your assignment',
+        content=f'Unfortunately, the interpreter is not available for your assignment on {assignment.start_time.strftime("%B %d, %Y")}'
+    )
+    
+    return JsonResponse({'status': 'success'})
+
+@require_POST
+def complete_assignment(request, pk):
+    assignment = get_object_or_404(Assignment, pk=pk)
+    
+    if assignment.interpreter != request.user.interpreter_profile:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    if assignment.status != 'IN_PROGRESS':
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+    assignment.status = 'COMPLETED'
+    assignment.completed_at = timezone.now()
+    assignment.save()
+    
+    # Calculer le paiement de l'interprète
+    duration = assignment.end_time - assignment.start_time
+    hours = duration.total_seconds() / 3600
+    total_payment = max(
+        assignment.minimum_hours * float(assignment.interpreter_rate),
+        hours * float(assignment.interpreter_rate)
+    )
+    assignment.total_interpreter_payment = total_payment
+    assignment.save()
+    
+    # Créer un paiement
+    Payment.objects.create(
+        assignment=assignment,
+        amount=total_payment,
+        payment_type='INTERPRETER_PAYMENT',
+        status='PENDING'
+    )
+    
+    return JsonResponse({'status': 'success'})
+
+
+# views.py
+
+
+class TranslatorEarningsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'trad/earnings.html'
+
+    def test_func(self):
+        return self.request.user.role == 'INTERPRETER'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        interpreter = self.request.user.interpreter_profile
+        now = timezone.now()
+
+        # Statistiques générales
+        all_payments = Payment.objects.filter(
+            assignment__interpreter=interpreter,
+            payment_type='INTERPRETER_PAYMENT'
+        )
+
+        # Statistiques du mois en cours
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        current_month_payments = all_payments.filter(payment_date__gte=current_month_start)
+
+        context['current_month'] = {
+            'earnings': current_month_payments.filter(status='COMPLETED').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00'),
+            'pending': current_month_payments.filter(status='PENDING').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00'),
+            'assignments': current_month_payments.count(),
+        }
+
+        # Statistiques des 12 derniers mois
+        twelve_months_ago = now - timedelta(days=365)
+        monthly_earnings = all_payments.filter(
+            payment_date__gte=twelve_months_ago,
+            status='COMPLETED'
+        ).annotate(
+            month=TruncMonth('payment_date')
+        ).values('month').annotate(
+            total=Sum('amount'),
+            count=Count('id')
+        ).order_by('month')
+
+        context['monthly_earnings'] = monthly_earnings
+
+        # Statistiques annuelles
+        yearly_earnings = all_payments.filter(
+            status='COMPLETED'
+        ).annotate(
+            year=TruncYear('payment_date')
+        ).values('year').annotate(
+            total=Sum('amount'),
+            count=Count('id')
+        ).order_by('-year')
+
+        context['yearly_earnings'] = yearly_earnings
+
+        # Paiements récents
+        context['recent_payments'] = all_payments.select_related(
+            'assignment'
+        ).order_by('-payment_date')[:10]
+
+        # Paiements en attente
+        context['pending_payments'] = all_payments.filter(
+            status='PENDING'
+        ).select_related('assignment').order_by('-payment_date')
+
+        # Statistiques globales
+        context['total_stats'] = {
+            'lifetime_earnings': all_payments.filter(status='COMPLETED').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00'),
+            'total_assignments': all_payments.filter(status='COMPLETED').count(),
+            'pending_amount': all_payments.filter(status='PENDING').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00'),
+            'average_payment': all_payments.filter(
+                status='COMPLETED'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00') / (
+                all_payments.filter(status='COMPLETED').count() or 1
+            )
+        }
+
+        # Liste des années pour le filtre
+        context['years'] = yearly_earnings.values_list('year', flat=True)
+
+        return context
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
+@require_GET
+def get_earnings_data(request, year=None):
+    """Vue API pour obtenir les données des gains pour les graphiques"""
+    interpreter = request.user.interpreter_profile
+    payments = Payment.objects.filter(
+        assignment__interpreter=interpreter,
+        payment_type='INTERPRETER_PAYMENT'
+    )
+
+    if year:
+        payments = payments.filter(payment_date__year=year)
+
+    # Données mensuelles
+    monthly_data = payments.filter(
+        status='COMPLETED'
+    ).annotate(
+        month=TruncMonth('payment_date')
+    ).values('month').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('month')
+
+    # Formatter les données pour les graphiques
+    chart_data = {
+        'labels': [],
+        'earnings': [],
+        'assignments': []
+    }
+
+    for data in monthly_data:
+        chart_data['labels'].append(data['month'].strftime('%B %Y'))
+        chart_data['earnings'].append(float(data['total']))
+        chart_data['assignments'].append(data['count'])
+
+    return JsonResponse(chart_data)

@@ -86,6 +86,61 @@ urlpatterns = [
         views.InterpreterRegistrationStep3View.as_view(), 
         name='interpreter_registration_step3'
     ),
+    path('interpreter/settings/', 
+        views.InterpreterSettingsView, 
+        name='interpreter_settings'),
+    
+        path(
+        'interpreter/schedule/',
+        views.InterpreterScheduleView.as_view(),
+        name='interpreter_schedule'
+    ),
+    path(
+        'interpreter/schedule/assignments/',
+        views.get_calendar_assignments,
+        name='get_calendar_assignments'
+    ),
+        path(
+        'interpreter/assignments/',
+        views.AssignmentListView.as_view(),
+        name='interpreter_assignments'
+    ),
+    path(
+        'interpreter/assignments/<int:pk>/',
+        views.AssignmentDetailView.as_view(),
+        name='assignment_detail'
+    ),
+    path(
+        'interpreter/assignments/<int:pk>/accept/',
+        views.accept_assignment,
+        name='accept_assignment'
+    ),
+    path(
+        'interpreter/assignments/<int:pk>/reject/',
+        views.reject_assignment,
+        name='reject_assignment'
+    ),
+    path(
+        'interpreter/assignments/<int:pk>/complete/',
+        views.complete_assignment,
+        name='complete_assignment'
+    ),
+        path(
+        'interpreter/earnings/',
+        views.TranslatorEarningsView.as_view(),
+        name='translator_earnings'
+    ),
+    path(
+        'interpreter/earnings/data/',
+        views.get_earnings_data,
+        name='earnings_data'
+    ),
+    path(
+        'interpreter/earnings/data/<int:year>/',
+        views.get_earnings_data,
+        name='earnings_data_year'
+    ),
+
     # API endpoints
     path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),
     path('api/notifications/clear-all/', views.ClearAllNotificationsView.as_view(), name='clear_all_notifications'),

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBD I&T - Interpreter Registration - Address and Documents</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --secondary-blue: #0066CC;
+            --accent-blue: #0088FF;
+            --white: #FFFFFF;
+            --error-red: #FF4B4B;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, rgba(0,136,255,0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .registration-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--primary-blue);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(0, 136, 255, 0.2);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            animation: shake 0.5s ease;
+        }
+
+        .help-text {
+            font-size: 0.875rem;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="registration-container">
+                    <h2 class="text-center mb-4" style="color: var(--primary-blue);">
+                        DBD I&T - Final Step
+                    </h2>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} error-message">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            {{ form.address.label_tag }}
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="error-message">
+                                    {% for error in form.address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.city.label_tag }}
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="error-message">
+                                        {% for error in form.city.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.state.label_tag }}
+                                {{ form.state }}
+                                {% if form.state.errors %}
+                                    <div class="error-message">
+                                        {% for error in form.state.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.zip_code.label_tag }}
+                                {{ form.zip_code }}
+                                {% if form.zip_code.errors %}
+                                    <div class="error-message">
+                                        {% for error in form.zip_code.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form.w9_on_file }}
+                            <label class="form-check-label" for="{{ form.w9_on_file.id_for_label }}">
+                                {{ form.w9_on_file.label }}
+                            </label>
+                            {% if form.w9_on_file.errors %}
+                                <div class="error-message">
+                                    {% for error in form.w9_on_file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">
+                                Complete Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Client-side validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</body>
+</html>

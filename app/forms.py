@@ -8,6 +8,10 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.forms import PasswordChangeForm
+from .models import NotificationPreference
+
+
 from .models import User, Interpreter, Language
 from .models import (
     User,
@@ -722,3 +726,57 @@ class InterpreterRegistrationForm3(forms.ModelForm):
         if zip_code and not zip_code.isdigit():
             raise ValidationError("ZIP code must contain only numbers")
         return zip_code
+    
+    
+
+class InterpreterProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30)
+    last_name = forms.CharField(max_length=30)
+    email = forms.EmailField()
+    phone_number = forms.CharField(max_length=15)
+    
+    # Champs bancaires
+    bank_name = forms.CharField(max_length=100)
+    account_holder = forms.CharField(max_length=100)
+    account_number = forms.CharField(max_length=50)
+    routing_number = forms.CharField(max_length=50)
+    
+    class Meta:
+        model = Interpreter
+        fields = [
+            'profile_image', 
+            'address', 
+            'city', 
+            'state', 
+            'zip_code',
+            'bio'
+        ]
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['first_name'].initial = user.first_name
+            self.fields['last_name'].initial = user.last_name
+            self.fields['email'].initial = user.email
+            self.fields['phone_number'].initial = user.phone_number
+            if hasattr(user.interpreter_profile, 'bank_info'):
+                self.fields['bank_name'].initial = user.interpreter_profile.bank_info.bank_name
+                self.fields['account_holder'].initial = user.interpreter_profile.bank_info.account_holder
+                self.fields['account_number'].initial = user.interpreter_profile.bank_info.account_number
+                self.fields['routing_number'].initial = user.interpreter_profile.bank_info.routing_number
+
+class NotificationPreferenceForm(forms.ModelForm):
+    class Meta:
+        model = NotificationPreference
+        exclude = ['user']
+        widgets = {
+            'preferred_language': forms.Select(attrs={'class': 'form-control'}),
+            'notification_frequency': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class CustomPasswordtradChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
