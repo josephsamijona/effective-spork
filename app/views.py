@@ -1,16 +1,6 @@
 # views.py
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from django.views.decorators.cache import never_cache
-from django.utils.decorators import method_decorator
-from django.views.generic import FormView
-from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.contrib.auth import login
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import UserPassesTestMixin
-from datetime import timedelta
+
+# Django core imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -18,35 +8,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Avg, Count, Q, Sum
+from django.db.models.functions import TruncMonth, TruncYear
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView
-from django.shortcuts import render, redirect
-from .forms import InterpreterProfileForm, NotificationPreferenceForm, CustomPasswordtradChangeForm
-from django.views.generic import ListView
-from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_POST
-from django.utils.decorators import method_decorator
-from .models import Notification
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncMonth, TruncYear
-from django.utils import timezone
-from datetime import timedelta
-from decimal import Decimal
-from django.db.models import Q
+from django.views.decorators.http import require_GET, require_POST
+
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -56,6 +29,11 @@ from django.views.generic import (
     UpdateView,
 )
 
+# Python standard library
+from datetime import timedelta
+from decimal import Decimal
+
+# Local imports
 from .forms import (
     AssignmentFeedbackForm,
     ClientProfileForm,
@@ -64,8 +42,14 @@ from .forms import (
     ClientRegistrationForm2,
     ContactForm,
     CustomPasswordChangeForm,
-    CustomPasswordResetForm,InterpreterRegistrationForm1,InterpreterRegistrationForm2,InterpreterRegistrationForm3,
+    CustomPasswordResetForm,
+    CustomPasswordtradChangeForm,
+    InterpreterProfileForm,
+    InterpreterRegistrationForm1,
+    InterpreterRegistrationForm2,
+    InterpreterRegistrationForm3,
     LoginForm,
+    NotificationPreferenceForm,
     NotificationPreferencesForm,
     PublicQuoteRequestForm,
     QuoteFilterForm,
@@ -86,7 +70,15 @@ from .models import (
     QuoteRequest,
     User,
 )
+import logging
 
+logger = logging.getLogger(__name__)
+
+###########################MAIN########################################
+#######################################################################
+#######################################################################
+#######################################################################
+#######################################################################
 class ChooseRegistrationTypeView(TemplateView):
     template_name = 'choose_registration.html'
 
@@ -228,84 +220,223 @@ class ContactSuccessView(TemplateView):
     template_name = 'public/contact_success.html'
     
 
+
+
 class CustomLoginView(LoginView):
     template_name = 'login.html'
     form_class = LoginForm
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        if self.request.user.role == 'CLIENT':
-            return reverse_lazy('dbdint:client_dashboard')
-        return reverse_lazy('dbdint:interpreter_dashboard')
+        user = self.request.user
+        logger.info(f"Determining success URL for user {user.id} with role {user.role}")
+        
+        try:
+            if user.role == 'CLIENT':
+                logger.debug(f"User {user.id} identified as CLIENT, redirecting to client dashboard")
+                return reverse_lazy('dbdint:client_dashboard')
+            
+            logger.debug(f"User {user.id} identified as INTERPRETER, redirecting to interpreter dashboard")
+            return reverse_lazy('dbdint:interpreter_dashboard')
+            
+        except Exception as e:
+            logger.error(f"Error in get_success_url for user {user.id}: {str(e)}", exc_info=True)
+            raise
 
     def form_invalid(self, form):
+        logger.warning(
+            "Login attempt failed",
+            extra={
+                'errors': form.errors,
+                'cleaned_data': form.cleaned_data,
+                'ip_address': self.request.META.get('REMOTE_ADDR')
+            }
+        )
         messages.error(self.request, 'Invalid email or password.')
         return super().form_invalid(form)
+
+    def form_valid(self, form):
+        logger.info(f"Successful login for user: {form.get_user().id}")
+        return super().form_valid(form)
 #################################CLIENT##################
+#########################################################
+####################################################################################################################################################
+#########################################################
+#########################################################
+
 
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationView(FormView):
-    template_name = 'client/auth/step1.html'
-    form_class = ClientRegistrationForm1
-    success_url = reverse_lazy('dbdint:client_register_step2')
+   template_name = 'client/auth/step1.html'
+   form_class = ClientRegistrationForm1
+   success_url = reverse_lazy('dbdint:client_register_step2')
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('dbdint:client_dashboard')
-        return super().dispatch(request, *args, **kwargs)
+   def dispatch(self, request, *args, **kwargs):
+       logger.info(f"Dispatching registration request for IP: {request.META.get('REMOTE_ADDR')}")
+       
+       if request.user.is_authenticated:
+           logger.debug(f"Already authenticated user {request.user.id} redirected to dashboard")
+           return redirect('dbdint:client_dashboard')
+       
+       try:
+           return super().dispatch(request, *args, **kwargs)
+       except Exception as e:
+           logger.error("Error in registration dispatch", exc_info=True)
+           raise
 
-    def form_valid(self, form):
-        # Store step 1 data in session
-        self.request.session['registration_step1'] = {
-            'email': form.cleaned_data['email'],
-            'password': form.cleaned_data['password1'],
-            'first_name': form.cleaned_data['first_name'],
-            'last_name': form.cleaned_data['last_name'],
-            'phone': form.cleaned_data['phone']
-        }
-        return super().form_valid(form)
+   def form_valid(self, form):
+       try:
+           logger.info("Processing valid registration form step 1")
+           
+           # Store step 1 data in session
+           registration_data = {
+               'email': form.cleaned_data['email'],
+               'password': '[FILTERED]',  # On ne log pas le mot de passe
+               'first_name': form.cleaned_data['first_name'],
+               'last_name': form.cleaned_data['last_name'],
+               'phone': form.cleaned_data['phone']
+           }
+           
+           logger.debug(
+               "Storing registration step 1 data in session",
+               extra={
+                   'email': form.cleaned_data['email'],
+                   'first_name': form.cleaned_data['first_name'],
+                   'last_name': form.cleaned_data['last_name']
+               }
+           )
+
+           self.request.session['registration_step1'] = {
+               'email': form.cleaned_data['email'],
+               'password': form.cleaned_data['password1'],
+               'first_name': form.cleaned_data['first_name'], 
+               'last_name': form.cleaned_data['last_name'],
+               'phone': form.cleaned_data['phone']
+           }
+
+           return super().form_valid(form)
+
+       except Exception as e:
+           logger.error(
+               "Error processing registration form step 1",
+               exc_info=True,
+               extra={'form_data': form.cleaned_data}
+           )
+           raise
+
+   def form_invalid(self, form):
+       logger.warning(
+           "Invalid registration form submission",
+           extra={
+               'errors': form.errors,
+               'ip_address': self.request.META.get('REMOTE_ADDR')
+           }
+       )
+       return super().form_invalid(form)
+   
+   
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationStep2View(FormView):
-    template_name = 'client/auth/step2.html'
-    form_class = ClientRegistrationForm2
-    success_url = reverse_lazy('dbdint:client_dashboard')
+   template_name = 'client/auth/step2.html'
+   form_class = ClientRegistrationForm2
+   success_url = reverse_lazy('dbdint:client_dashboard')
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('dbdint:registration_step1'):
-            return redirect('dbdint:client_register')
-        return super().dispatch(request, *args, **kwargs)
+   def dispatch(self, request, *args, **kwargs):
+       logger.info(f"Dispatching registration step 2 for IP: {request.META.get('REMOTE_ADDR')}")
 
-    def form_valid(self, form):
-        step1_data = self.request.session['dbdint:registration_step1']
-        
-        # Create user
-        user = User.objects.create_user(
-            email=step1_data['email'],
-            password=step1_data['password'],
-            first_name=step1_data['first_name'],
-            last_name=step1_data['last_name'],
-            phone=step1_data['phone'],
-            role='CLIENT'
-        )
+       if not request.session.get('dbdint:registration_step1'):
+           logger.warning("Step 1 data missing in session, redirecting to step 1")
+           return redirect('dbdint:client_register')
+           
+       try:
+           return super().dispatch(request, *args, **kwargs)
+       except Exception as e:
+           logger.error("Error in step 2 dispatch", exc_info=True)
+           raise
 
-        # Create client profile
-        client = form.save(commit=False)
-        client.user = user
-        client.save()
+   def form_valid(self, form):
+       try:
+           logger.info("Processing valid registration form step 2")
+           step1_data = self.request.session['dbdint:registration_step1']
+           
+           logger.debug(
+               "Retrieved step 1 data from session",
+               extra={
+                   'email': step1_data['email'],
+                   'first_name': step1_data['first_name']
+               }
+           )
 
-        # Clean up session
-        del self.request.session['dbdint:registration_step1']
+           # Create user
+           user = User.objects.create_user(
+               email=step1_data['email'],
+               password=step1_data['password'],
+               first_name=step1_data['first_name'],
+               last_name=step1_data['last_name'],
+               phone=step1_data['phone'],
+               role='CLIENT'
+           )
+           
+           logger.info(f"Created new user with ID: {user.id}")
 
-        # Log the user in
-        login(self.request, user)
-        messages.success(self.request, 'Your account has been created successfully!')
-        return super().form_valid(form)
+           # Create client profile
+           try:
+               client = form.save(commit=False)
+               client.user = user
+               client.save()
+               logger.info(f"Created client profile for user {user.id}")
+           except Exception as e:
+               logger.error(f"Failed to create client profile for user {user.id}", exc_info=True)
+               # Clean up created user if profile creation fails
+               user.delete()
+               raise
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
+           # Clean up session
+           del self.request.session['dbdint:registration_step1']
+           logger.debug("Cleaned up session data")
+
+           # Log the user in
+           login(self.request, user)
+           logger.info(f"Successfully logged in user {user.id}")
+           
+           messages.success(self.request, 'Your account has been created successfully!')
+           return super().form_valid(form)
+
+       except Exception as e:
+           logger.error(
+               "Error processing registration step 2",
+               exc_info=True,
+               extra={'form_data': form.cleaned_data}
+           )
+           messages.error(self.request, 'An error occurred during registration. Please try again.')
+           raise
+
+   def form_invalid(self, form):
+       logger.warning(
+           "Invalid registration form step 2 submission",
+           extra={
+               'errors': form.errors,
+               'ip_address': self.request.META.get('REMOTE_ADDR')
+           }
+       )
+       messages.error(self.request, 'Please correct the errors below.')
+       return super().form_invalid(form)
+
+   def get_context_data(self, **kwargs):
+       try:
+           context = super().get_context_data(**kwargs)
+           step1_data = self.request.session.get('dbdint:registration_step1', {})
+           logger.debug(
+               "Adding step 1 data to context",
+               extra={'email': step1_data.get('email')}
+           )
+           context['step1_data'] = step1_data
+           return context
+       except Exception as e:
+           logger.error("Error getting context data", exc_info=True)
+           raise
 
 
 class NotificationPreferencesView(LoginRequiredMixin, UpdateView):
@@ -727,7 +858,7 @@ class AssignmentDetailClientView(LoginRequiredMixin, ClientRequiredMixin, Detail
         return self.render_to_response(context)
 
 
-# views.py
+
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     """Main profile view that combines user and client profile forms"""
