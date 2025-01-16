@@ -1,4 +1,6 @@
 # views.py
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -1123,12 +1125,6 @@ def mark_all_notifications_as_read(request):
 
 
 # views.py
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Q
-from django.utils import timezone
-from datetime import timedelta
-from django.http import JsonResponse
 
 class InterpreterScheduleView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'trad/schedule.html'
@@ -1453,8 +1449,7 @@ class TranslatorEarningsView(LoginRequiredMixin, UserPassesTestMixin, TemplateVi
 
         return context
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+
 
 @require_GET
 def get_earnings_data(request, year=None):
