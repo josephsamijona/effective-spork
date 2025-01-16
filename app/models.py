@@ -89,6 +89,8 @@ class InterpreterLanguage(models.Model):
 class Interpreter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='interpreter_profile')
     languages = models.ManyToManyField(Language, through=InterpreterLanguage)
+    profile_image = models.ImageField(upload_to='interpreter_profiles/', null=True, blank=True)
+    bio = models.TextField(blank=True, null=True)
     address = models.TextField()
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=50)
