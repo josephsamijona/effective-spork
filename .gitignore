@@ -52,3 +52,6 @@ celerybeat.pid
 .coverage
 coverage.xml
 *.cover
+fill.py
+langue.py
+service.py
