@@ -55,8 +55,7 @@ RUN python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(50))" > 
 # Collecter les fichiers statiques
 RUN python manage.py collectstatic --noinput
 
-# Migrations de base de données
-RUN python manage.py migrate
+
 
 # Exposer le port
 EXPOSE 8000
