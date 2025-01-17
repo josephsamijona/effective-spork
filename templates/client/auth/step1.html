@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Step 1 | DBD I&T</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/step1.css' %}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Logo Header -->
+        <header class="auth-header">
+            <svg class="auth-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+        </header>
+
+        <!-- Main Form Container -->
+        <main class="auth-container">
+            <!-- Alert Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        <span class="alert-icon">
+                            {% if message.tags == 'error' %}⚠️{% else %}✓{% endif %}
+                        </span>
+                        <span class="alert-text">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Form Header -->
+            <div class="auth-header-content">
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join our network of professionals</p>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-line"></div>
+                    <div class="progress-line-active"></div>
+                    <div class="steps">
+                        <div class="step active">
+                            <div class="step-number">1</div>
+                            <span class="step-label">Personal Info</span>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <span class="step-label">Company Details</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <form method="POST" class="auth-form" novalidate>
+                {% csrf_token %}
+
+                <!-- Personal Information Section -->
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Personal Information</h2>
+                    
+                    <div class="form-grid">
+                        <!-- First Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.first_name.id_for_label }}">
+                                First Name <span class="required">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <span class="error-message">{{ form.first_name.errors|join:", " }}</span>
+                            {% endif %}
+                            <span class="input-hint">Enter your legal first name</span>
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.last_name.id_for_label }}">
+                                Last Name <span class="required">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <span class="error-message">{{ form.last_name.errors|join:", " }}</span>
+                            {% endif %}
+                            <span class="input-hint">Enter your legal last name</span>
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.username.id_for_label }}">
+                            Username <span class="required">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <span class="error-message">{{ form.username.errors|join:", " }}</span>
+                        {% endif %}
+                        <span class="input-hint">Choose a unique username (letters and numbers only, minimum 3 characters)</span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.email.id_for_label }}">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <span class="error-message">{{ form.email.errors|join:", " }}</span>
+                        {% endif %}
+                        <span class="input-hint">Your email address will be used for account verification</span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.phone.id_for_label }}">
+                            Phone Number <span class="required">*</span>
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <span class="error-message">{{ form.phone.errors|join:", " }}</span>
+                        {% endif %}
+                        <span class="input-hint">Enter your contact number</span>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Security</h2>
+                    
+                    <div class="form-grid">
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.password1.id_for_label }}">
+                                Password <span class="required">*</span>
+                            </label>
+                            <div class="password-input-container">
+                                {{ form.password1 }}
+                                <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% if form.password1.errors %}
+                                <span class="error-message">{{ form.password1.errors|join:", " }}</span>
+                            {% endif %}
+                            <div class="password-strength">
+                                <div class="strength-meter">
+                                    <div class="strength-meter-fill"></div>
+                                </div>
+                                <span class="strength-text"></span>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.password2.id_for_label }}">
+                                Confirm Password <span class="required">*</span>
+                            </label>
+                            <div class="password-input-container">
+                                {{ form.password2 }}
+                                <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% if form.password2.errors %}
+                                <span class="error-message">{{ form.password2.errors|join:", " }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Continue to Company Details
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <footer class="auth-footer">
+                <p>Already have an account? <a href="{% url 'dbdint:login' %}" class="text-accent">Sign In</a></p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Password Strength Checker -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle password visibility
+            document.querySelectorAll('.password-toggle').forEach(button => {
+                button.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('input');
+                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                    input.setAttribute('type', type);
+                });
+            });
+
+            // Password strength checker
+            const password1Input = document.querySelector('input[name="password1"]');
+            const strengthMeter = document.querySelector('.strength-meter-fill');
+            const strengthText = document.querySelector('.strength-text');
+
+            password1Input.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                let status = '';
+
+                if (password.length >= 8) strength += 25;
+                if (password.match(/[a-z]+/)) strength += 25;
+                if (password.match(/[A-Z]+/)) strength += 25;
+                if (password.match(/[0-9]+/)) strength += 25;
+
+                strengthMeter.style.width = strength + '%';
+
+                if (strength <= 25) {
+                    status = 'Weak';
+                    strengthMeter.style.backgroundColor = '#ef4444';
+                } else if (strength <= 50) {
+                    status = 'Fair';
+                    strengthMeter.style.backgroundColor = '#f97316';
+                } else if (strength <= 75) {
+                    status = 'Good';
+                    strengthMeter.style.backgroundColor = '#eab308';
+                } else {
+                    status = 'Strong';
+                    strengthMeter.style.backgroundColor = '#22c55e';
+                }
+
+                strengthText.textContent = status;
+            });
+        });
+    </script>
+</body>
+</html>

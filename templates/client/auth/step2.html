@@ -4,80 +4,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Details - DBD I&T</title>
+    <title>Register - Step 2 | DBD I&T</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/step1.css' %}">
-    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
 </head>
 <body>
     <div class="main-container">
+        <!-- Logo Header -->
         <header class="auth-header">
-            <img src="{% static 'images/logo.png' %}" alt="DBD I&T Logo" class="logo">
+            <svg class="auth-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
         </header>
 
-        <div class="auth-container">
+        <!-- Main Form Container -->
+        <main class="auth-container">
+            <!-- Alert Messages -->
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        <span class="alert-icon">{% if message.tags == 'error' %}⚠️{% else %}✓{% endif %}</span>
-                        {{ message }}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        <span class="alert-icon">
+                            {% if message.tags == 'error' %}⚠️{% else %}✓{% endif %}
+                        </span>
+                        <span class="alert-text">{{ message }}</span>
                     </div>
                 {% endfor %}
             {% endif %}
 
-            <div class="auth-content">
+            <!-- Form Header -->
+            <div class="auth-header-content">
                 <h1 class="auth-title">Company Information</h1>
                 <p class="auth-subtitle">Complete your business profile</p>
+            </div>
 
-                <!-- Progress Bar améliorée -->
-                <div class="progress-bar">
-                    <div class="progress-line"></div>
-                    <div class="progress-line-active" style="width: 100%;"></div>
-                    <div class="steps">
-                        <div class="step completed">
-                            <div class="step-number">✓</div>
-                            <div class="step-label">Personal Information</div>
-                        </div>
-                        <div class="step active">
-                            <div class="step-number">2</div>
-                            <div class="step-label">Company Details</div>
-                        </div>
-                    </div>
+            <!-- Step 1 Summary -->
+            <div class="form-section">
+                <h2 class="section-title">Personal Information Summary</h2>
+                <div class="summary-content">
+                    <p><strong>{{ step1_data.first_name }} {{ step1_data.last_name }}</strong></p>
+                    <p>{{ step1_data.username }} | {{ step1_data.email }} | {{ step1_data.phone }}</p>
                 </div>
+            </div>
 
-                <!-- Résumé des informations de l'étape 1 -->
-                <div class="step-summary">
-                    <h3 class="summary-title">Personal Information Summary</h3>
-                    <div class="summary-content">
-                        <p><strong>{{ step1_data.first_name }} {{ step1_data.last_name }}</strong></p>
-                        <p>{{ step1_data.email }} | {{ step1_data.phone }}</p>
-                    </div>
-                </div>
+            <!-- Registration Form -->
+            <form method="POST" class="auth-form" novalidate>
+                {% csrf_token %}
 
-                <form method="POST" class="auth-form" novalidate id="companyForm">
-                    {% csrf_token %}
+                <!-- Company Information Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Company Details</h2>
 
+                    <!-- Company Name -->
                     <div class="form-group">
-                        <label for="{{ form.company_name.id_for_label }}">Company Name*</label>
+                        <label class="form-label" for="{{ form.company_name.id_for_label }}">
+                            Company Name <span class="required">*</span>
+                        </label>
                         {{ form.company_name }}
-                        <div class="input-hint">Enter your registered business name</div>
                         {% if form.company_name.errors %}
                             <span class="error-message">{{ form.company_name.errors|join:", " }}</span>
                         {% endif %}
+                        <span class="input-hint">Enter your registered business name</span>
                     </div>
 
+                    <!-- Business Address -->
                     <div class="form-group">
-                        <label for="{{ form.address.id_for_label }}">Business Address*</label>
+                        <label class="form-label" for="{{ form.address.id_for_label }}">
+                            Business Address <span class="required">*</span>
+                        </label>
                         {{ form.address }}
-                        <div class="input-hint">Enter your company's primary address</div>
                         {% if form.address.errors %}
                             <span class="error-message">{{ form.address.errors|join:", " }}</span>
                         {% endif %}
+                        <span class="input-hint">Enter your company's primary address</span>
                     </div>
 
-                    <div class="form-grid-thirds">
+                    <!-- City, State, ZIP -->
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="{{ form.city.id_for_label }}">City*</label>
+                            <label class="form-label" for="{{ form.city.id_for_label }}">
+                                City <span class="required">*</span>
+                            </label>
                             {{ form.city }}
                             {% if form.city.errors %}
                                 <span class="error-message">{{ form.city.errors|join:", " }}</span>
@@ -85,7 +94,9 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="{{ form.state.id_for_label }}">State*</label>
+                            <label class="form-label" for="{{ form.state.id_for_label }}">
+                                State <span class="required">*</span>
+                            </label>
                             {{ form.state }}
                             {% if form.state.errors %}
                                 <span class="error-message">{{ form.state.errors|join:", " }}</span>
@@ -93,45 +104,112 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="{{ form.zip_code.id_for_label }}">ZIP Code*</label>
+                            <label class="form-label" for="{{ form.zip_code.id_for_label }}">
+                                ZIP Code <span class="required">*</span>
+                            </label>
                             {{ form.zip_code }}
                             {% if form.zip_code.errors %}
                                 <span class="error-message">{{ form.zip_code.errors|join:", " }}</span>
                             {% endif %}
                         </div>
                     </div>
+                </div>
 
+                <!-- Communication Preferences Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Communication Preferences</h2>
                     <div class="form-group">
-                        <label for="{{ form.preferred_language.id_for_label }}">Preferred Language*</label>
-                        {{ form.preferred_language }}
-                        <div class="input-hint">Select your preferred communication language</div>
+                        <label class="form-label" for="{{ form.preferred_language.id_for_label }}">
+                            Preferred Language <span class="required">*</span>
+                        </label>
+                        <div class="language-selection">
+                            {{ form.preferred_language }}
+                            <svg class="language-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                                <path d="M2 12h20"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
                         {% if form.preferred_language.errors %}
                             <span class="error-message">{{ form.preferred_language.errors|join:", " }}</span>
                         {% endif %}
+                        <div class="language-info">
+                            <span class="input-hint">Select your preferred language for:</span>
+                            <ul class="language-features">
+                               
+                            </ul>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="form-actions">
-                        <a href="{% url 'dbdint:client_register' %}" class="btn btn-secondary">
-                            <span class="btn-icon">←</span>
-                            Back to Personal Info
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            Complete Registration
-                            <span class="btn-icon">✓</span>
-                        </button>
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'dbdint:client_register' %}" class="btn btn-primary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Personal Info
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        Complete Registration
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Registration Progress -->
+            <div class="registration-progress">
+                <div class="progress-header">
+                    <h3 class="progress-title">Registration Progress</h3>
+                    <span class="progress-percentage">90% Complete</span>
+                </div>
+                
+                <div class="progress-steps">
+                    <div class="progress-step completed">
+                        <div class="step-indicator">
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                        </div>
+                        <div class="step-details">
+                            <span class="step-name">Personal Information</span>
+                            <span class="step-status">Completed</span>
+                        </div>
                     </div>
-                </form>
+                    <div class="progress-step current">
+                        <div class="step-indicator">2</div>
+                        <div class="step-details">
+                            <span class="step-name">Company Details</span>
+                            <span class="step-status">In Progress</span>
+                        </div>
+                    </div>
+                    <div class="progress-step">
+                        <div class="step-indicator">✓</div>
+                        <div class="step-details">
+                            <span class="step-name">Finish</span>
+                            <span class="step-status">Almost there!</span>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Progress indicator -->
-                <div class="form-progress">
-                    <div class="progress-text">Registration almost complete!</div>
-                    <div class="progress-percentage">90%</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-background">
+                        <div class="progress-bar-fill" style="width: 90%"></div>
+                    </div>
+                </div>
+
+                <div class="progress-message">
+                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4"/>
+                        <path d="M12 8h.01"/>
+                    </svg>
+                    <span>Just a few more details to complete your registration!</span>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
-
-    <!-- Scripts -->
-    <script src="{% static 'js/clientregister.js' %}"></script>
 </body>
 </html>

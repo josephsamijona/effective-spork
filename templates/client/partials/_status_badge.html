@@ -3,96 +3,22 @@
 Usage: {% include 'client/partials/_status_badge.html' with status=quote.status %}
 {% endcomment %}
 <span class="status-badge status-{{ status|lower }}">
-    {{ status|get_status_display }}
+    {% if status == "PENDING" %}
+        Pending
+    {% elif status == "PROCESSING" %}
+        Processing
+    {% elif status == "QUOTED" %}
+        Quoted
+    {% elif status == "ACCEPTED" %}
+        Accepted
+    {% elif status == "REJECTED" %}
+        Rejected
+    {% elif status == "EXPIRED" %}
+        Expired
+    {% endif %}
 </span>
 
-<!-- Add this to your static CSS file -->
 <style>
-    /* Quote Card Styles */
-    .quote-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: transform 0.3s ease;
-    }
-
-    .quote-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .quote-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1rem;
-    }
-
-    .quote-title h3 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: white;
-        margin: 0 0 0.5rem 0;
-    }
-
-    .detail-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .detail-label {
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .detail-value {
-        color: white;
-        font-weight: 500;
-    }
-
-    .quote-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Timeline Styles */
-    .timeline {
-        position: relative;
-        padding-left: 2rem;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 2px;
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .timeline-event {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-
-    .event-marker {
-        position: absolute;
-        left: -2.4rem;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        background: var(--accent-blue);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
     /* Status Badge Styles */
     .status-badge {
         display: inline-block;
@@ -102,103 +28,33 @@ Usage: {% include 'client/partials/_status_badge.html' with status=quote.status 
         font-weight: 500;
     }
 
-    .status-pending { background: rgba(255, 170, 0, 0.2); color: #FFB020; }
-    .status-processing { background: rgba(88, 103, 221, 0.2); color: #5867DD; }
-    .status-quoted { background: rgba(0, 136, 255, 0.2); color: #0088FF; }
-    .status-accepted { background: rgba(0, 200, 83, 0.2); color: #00C853; }
-    .status-rejected { background: rgba(255, 75, 75, 0.2); color: #FF4B4B; }
-
-    /* Filter Styles */
-    .filter-section {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+    .status-pending { 
+        background: rgba(255, 170, 0, 0.2); 
+        color: #FFB020; 
+    }
+    
+    .status-processing { 
+        background: rgba(88, 103, 221, 0.2); 
+        color: #5867DD; 
+    }
+    
+    .status-quoted { 
+        background: rgba(0, 136, 255, 0.2); 
+        color: #0088FF; 
+    }
+    
+    .status-accepted { 
+        background: rgba(0, 200, 83, 0.2); 
+        color: #00C853; 
+    }
+    
+    .status-rejected { 
+        background: rgba(255, 75, 75, 0.2); 
+        color: #FF4B4B; 
     }
 
-    .status-chips {
-        display: flex;
-        gap: 0.5rem;
-        overflow-x: auto;
-        padding: 0.5rem 0;
-        margin-bottom: 1rem;
-    }
-
-    .status-chip {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .status-chip.active {
-        background: var(--accent-blue);
-        border-color: var(--accent-blue);
-    }
-
-    .filter-form {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .form-row {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .date-range {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .filter-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    @media (max-width: 768px) {
-        .date-range {
-            grid-template-columns: 1fr;
-        }
+    .status-expired { 
+        background: rgba(108, 117, 125, 0.2); 
+        color: #6c757d; 
     }
 </style>
-
-<!-- Add this to your static JavaScript file -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Status chips functionality
-        const statusChips = document.querySelectorAll('.status-chip');
-        statusChips.forEach(chip => {
-            chip.addEventListener('click', function() {
-                statusChips.forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                document.querySelector('[name="status"]').value = this.dataset.status;
-            });
-        });
-
-        // Filter toggle
-        const filterToggle = document.querySelector('.filter-toggle');
-        if (filterToggle) {
-            filterToggle.addEventListener('click', function() {
-                const target = document.getElementById(this.dataset.target);
-                target.style.display = target.style.display === 'none' ? 'grid' : 'none';
-            });
-        }
-
-        // Reset form
-        const resetButton = document.querySelector('.btn-reset');
-        if (resetButton) {
-            resetButton.addEventListener('click', function() {
-                statusChips.forEach(chip => {
-                    chip.classList.remove('active');
-                });
-                document.querySelector('.status-chip[data-status=""]').classList.add('active');
-            });
-        }
-    });
-</script>

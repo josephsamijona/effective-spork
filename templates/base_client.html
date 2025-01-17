@@ -188,15 +188,13 @@
     <header class="dashboard-header">
         <h1 class="header-title">{% block header_title %}Dashboard{% endblock %}</h1>
         <div class="header-actions">
-            <div class="notification-badge">
-                <i class="fas fa-bell"></i>
-                {% if unread_notifications_count > 0 %}
-                <span class="notification-count">{{ unread_notifications_count }}</span>
-                {% endif %}
-            </div>
-            <a href="{% url 'dbdint:logout' %}" class="nav-item">
-                <i class="fas fa-sign-out-alt"></i>
-            </a>
+            
+            <form method="post" action="{% url 'dbdint:logout' %}" class="nav-item" style="margin: 0; padding: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0;">
+                    <i class="fas fa-sign-out-alt" style="color: white; font-size: 1.25rem;"></i>
+                </button>
+            </form>
         </div>
     </header>
 
@@ -220,7 +218,7 @@
             <i class="fas fa-home"></i>
             <span>Home</span>
         </a>
-        <a href="{% url 'dbdint:client_create_quote' %}" class="nav-item {% if request.resolver_match.url_name == 'dbdint:client_create_quote' %}active{% endif %}">
+        <a href="{% url 'dbdint:client_quote_list' %}" class="nav-item {% if request.resolver_match.url_name == 'dbdint:client_create_quote' %}active{% endif %}">
             <i class="fas fa-file-invoice"></i>
             <span>Quote</span>
         </a>

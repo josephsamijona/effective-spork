@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 from django.http import JsonResponse
@@ -59,6 +60,7 @@ from .forms import (
 )
 
 from .models import (
+    User,
     Assignment,
     Client,
     ContactMessage,
@@ -68,7 +70,7 @@ from .models import (
     PublicQuoteRequest,
     Quote,
     QuoteRequest,
-    User,
+    User,ServiceType
 )
 import logging
 
@@ -268,177 +270,144 @@ class CustomLoginView(LoginView):
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationView(FormView):
-   template_name = 'client/auth/step1.html'
-   form_class = ClientRegistrationForm1
-   success_url = reverse_lazy('dbdint:client_register_step2')
+    template_name = 'client/auth/step1.html'
+    form_class = ClientRegistrationForm1
+    success_url = reverse_lazy('dbdint:client_register_step2')
 
-   def dispatch(self, request, *args, **kwargs):
-       logger.info(f"Dispatching registration request for IP: {request.META.get('REMOTE_ADDR')}")
-       
-       if request.user.is_authenticated:
-           logger.debug(f"Already authenticated user {request.user.id} redirected to dashboard")
-           return redirect('dbdint:client_dashboard')
-       
-       try:
-           return super().dispatch(request, *args, **kwargs)
-       except Exception as e:
-           logger.error("Error in registration dispatch", exc_info=True)
-           raise
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.registration_complete:
+            return redirect('dbdint:client_dashboard')
+        return super().get(request, *args, **kwargs)
 
-   def form_valid(self, form):
-       try:
-           logger.info("Processing valid registration form step 1")
-           
-           # Store step 1 data in session
-           registration_data = {
-               'email': form.cleaned_data['email'],
-               'password': '[FILTERED]',  # On ne log pas le mot de passe
-               'first_name': form.cleaned_data['first_name'],
-               'last_name': form.cleaned_data['last_name'],
-               'phone': form.cleaned_data['phone']
-           }
-           
-           logger.debug(
-               "Storing registration step 1 data in session",
-               extra={
-                   'email': form.cleaned_data['email'],
-                   'first_name': form.cleaned_data['first_name'],
-                   'last_name': form.cleaned_data['last_name']
-               }
-           )
+    def form_valid(self, form):
+        try:
+            logger.info("Processing valid registration form step 1")
+            
+            # Créer l'utilisateur avec le rôle CLIENT
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                phone=form.cleaned_data['phone'],
+                role=User.Roles.CLIENT,
+                registration_complete=False
+            )
 
-           self.request.session['registration_step1'] = {
-               'email': form.cleaned_data['email'],
-               'password': form.cleaned_data['password1'],
-               'first_name': form.cleaned_data['first_name'], 
-               'last_name': form.cleaned_data['last_name'],
-               'phone': form.cleaned_data['phone']
-           }
+            # Connecter l'utilisateur
+            login(self.request, user)
+            
+            logger.info(
+                f"Step 1 completed successfully",
+                extra={
+                    'user_id': user.id,
+                    'username': user.username,
+                    'ip_address': self.request.META.get('REMOTE_ADDR')
+                }
+            )
 
-           return super().form_valid(form)
+            messages.success(self.request, "Personal information saved successfully. Please complete your company details.")
+            return super().form_valid(form)
 
-       except Exception as e:
-           logger.error(
-               "Error processing registration form step 1",
-               exc_info=True,
-               extra={'form_data': form.cleaned_data}
-           )
-           raise
+        except Exception as e:
+            logger.error(
+                "Error processing registration form step 1",
+                exc_info=True,
+                extra={
+                    'form_data': {
+                        k: v for k, v in form.cleaned_data.items() 
+                        if k not in ['password1', 'password2']
+                    },
+                    'ip_address': self.request.META.get('REMOTE_ADDR')
+                }
+            )
+            messages.error(self.request, "An error occurred during registration. Please try again.")
+            return self.form_invalid(form)
 
-   def form_invalid(self, form):
-       logger.warning(
-           "Invalid registration form submission",
-           extra={
-               'errors': form.errors,
-               'ip_address': self.request.META.get('REMOTE_ADDR')
-           }
-       )
-       return super().form_invalid(form)
-   
-   
 
 @method_decorator(never_cache, name='dispatch')
 class ClientRegistrationStep2View(FormView):
-   template_name = 'client/auth/step2.html'
-   form_class = ClientRegistrationForm2
-   success_url = reverse_lazy('dbdint:client_dashboard')
+    template_name = 'client/auth/step2.html'
+    form_class = ClientRegistrationForm2
+    success_url = reverse_lazy('dbdint:client_dashboard')
 
-   def dispatch(self, request, *args, **kwargs):
-       logger.info(f"Dispatching registration step 2 for IP: {request.META.get('REMOTE_ADDR')}")
+    def get(self, request, *args, **kwargs):
+        # Si l'utilisateur n'est pas authentifié, rediriger vers l'étape 1
+        if not request.user.is_authenticated:
+            messages.error(request, "Please complete step 1 first.")
+            return redirect('dbdint:client_register')
+            
+        # Si l'utilisateur a déjà complété son inscription
+        if request.user.registration_complete:
+            return redirect('dbdint:client_dashboard')
+        
+        return super().get(request, *args, **kwargs)
 
-       if not request.session.get('dbdint:registration_step1'):
-           logger.warning("Step 1 data missing in session, redirecting to step 1")
-           return redirect('dbdint:client_register')
-           
-       try:
-           return super().dispatch(request, *args, **kwargs)
-       except Exception as e:
-           logger.error("Error in step 2 dispatch", exc_info=True)
-           raise
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            context['user_data'] = {
+                'username': self.request.user.username,
+                'email': self.request.user.email,
+                'first_name': self.request.user.first_name,
+                'last_name': self.request.user.last_name,
+                'phone': self.request.user.phone
+            }
+        return context
 
-   def form_valid(self, form):
-       try:
-           logger.info("Processing valid registration form step 2")
-           step1_data = self.request.session['dbdint:registration_step1']
-           
-           logger.debug(
-               "Retrieved step 1 data from session",
-               extra={
-                   'email': step1_data['email'],
-                   'first_name': step1_data['first_name']
-               }
-           )
+    def form_valid(self, form):
+        try:
+            logger.info("Processing valid registration form step 2")
+            
+            if not self.request.user.is_authenticated:
+                messages.error(self.request, "Session expired. Please start over.")
+                return redirect('dbdint:client_register')
 
-           # Create user
-           user = User.objects.create_user(
-               email=step1_data['email'],
-               password=step1_data['password'],
-               first_name=step1_data['first_name'],
-               last_name=step1_data['last_name'],
-               phone=step1_data['phone'],
-               role='CLIENT'
-           )
-           
-           logger.info(f"Created new user with ID: {user.id}")
+            # Créer le profil client avec l'utilisateur existant
+            client_profile = form.save(commit=False)
+            client_profile.user = self.request.user
+            client_profile.save()
 
-           # Create client profile
-           try:
-               client = form.save(commit=False)
-               client.user = user
-               client.save()
-               logger.info(f"Created client profile for user {user.id}")
-           except Exception as e:
-               logger.error(f"Failed to create client profile for user {user.id}", exc_info=True)
-               # Clean up created user if profile creation fails
-               user.delete()
-               raise
+            # Marquer l'inscription comme complète
+            self.request.user.registration_complete = True
+            self.request.user.save()
+            
+            logger.info(
+                "Registration completed successfully",
+                extra={
+                    'user_id': self.request.user.id,
+                    'username': self.request.user.username,
+                    'ip_address': self.request.META.get('REMOTE_ADDR')
+                }
+            )
 
-           # Clean up session
-           del self.request.session['dbdint:registration_step1']
-           logger.debug("Cleaned up session data")
+            messages.success(self.request, "Registration completed successfully! Welcome to DBD I&T.")
+            return super().form_valid(form)
 
-           # Log the user in
-           login(self.request, user)
-           logger.info(f"Successfully logged in user {user.id}")
-           
-           messages.success(self.request, 'Your account has been created successfully!')
-           return super().form_valid(form)
+        except Exception as e:
+            logger.error(
+                "Error processing registration form step 2",
+                exc_info=True,
+                extra={
+                    'form_data': form.cleaned_data,
+                    'ip_address': self.request.META.get('REMOTE_ADDR')
+                }
+            )
+            raise
 
-       except Exception as e:
-           logger.error(
-               "Error processing registration step 2",
-               exc_info=True,
-               extra={'form_data': form.cleaned_data}
-           )
-           messages.error(self.request, 'An error occurred during registration. Please try again.')
-           raise
-
-   def form_invalid(self, form):
-       logger.warning(
-           "Invalid registration form step 2 submission",
-           extra={
-               'errors': form.errors,
-               'ip_address': self.request.META.get('REMOTE_ADDR')
-           }
-       )
-       messages.error(self.request, 'Please correct the errors below.')
-       return super().form_invalid(form)
-
-   def get_context_data(self, **kwargs):
-       try:
-           context = super().get_context_data(**kwargs)
-           step1_data = self.request.session.get('dbdint:registration_step1', {})
-           logger.debug(
-               "Adding step 1 data to context",
-               extra={'email': step1_data.get('email')}
-           )
-           context['step1_data'] = step1_data
-           return context
-       except Exception as e:
-           logger.error("Error getting context data", exc_info=True)
-           raise
-
-
+    def form_invalid(self, form):
+        logger.warning(
+            "Invalid registration form step 2 submission",
+            extra={
+                'errors': form.errors,
+                'ip_address': self.request.META.get('REMOTE_ADDR')
+            }
+        )
+        return super().form_invalid(form)
+    
+    
+    
 class NotificationPreferencesView(LoginRequiredMixin, UpdateView):
     model = NotificationPreference
     form_class = NotificationPreferencesForm
@@ -462,68 +431,168 @@ class RegistrationSuccessView(TemplateView):
 
 
 
-class ClientDashboardView(LoginRequiredMixin, UserPassesTestMixin):
+class ClientDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'client/home.html'
+    login_url = 'dbdint:login'
+    permission_denied_message = "Access denied. This area is for clients only."
     
     def test_func(self):
-        return self.request.user.role == 'CLIENT'
+        user = self.request.user
+        
+        # Log plus détaillé
+        logger.debug(
+            "Testing client dashboard access",
+            extra={
+                'user_id': user.id,
+                'role': getattr(user, 'role', 'NO_ROLE'),
+                'has_client_profile': hasattr(user, 'client_profile'),
+                'registration_complete': user.registration_complete
+            }
+        )
+        
+        if not user.role:
+            logger.error(f"User {user.id} has no role assigned")
+            return False
+
+        return (user.role == User.Roles.CLIENT and 
+                hasattr(user, 'client_profile') and 
+                user.registration_complete)
+
+    def handle_no_permission(self):
+        user = self.request.user
+        
+        if not user.is_authenticated:
+            return redirect(self.login_url)
+        
+        # Si l'utilisateur n'a pas de rôle
+        if not user.role:
+            messages.error(self.request, "Your account setup is incomplete. Please contact support.")
+            return redirect('dbdint:home')
+            
+        # Si l'inscription n'est pas complète et que c'est un client
+        if user.role == User.Roles.CLIENT and not user.registration_complete:
+            if 'registration_step1' in self.request.session:
+                return redirect('dbdint:client_register_step2')
+            else:
+                return redirect('dbdint:client_register')
+                
+        # Pour les autres rôles
+        if user.role == User.Roles.INTERPRETER:
+            messages.warning(self.request, "This area is for clients only. Redirecting to interpreter dashboard.")
+            return redirect('dbdint:interpreter_dashboard')
+        elif user.role == User.Roles.ADMIN:
+            return redirect('dbdint:admin_dashboard')
+            
+        messages.error(self.request, "Access denied. Please complete your registration or contact support.")
+        return redirect('dbdint:home')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Récupérer le client
-        client = self.request.user.client_profile
-        
-        # Période pour les statistiques (30 derniers jours)
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-        
-        # Statistiques de base
-        context['stats'] = {
-            'pending_quotes': QuoteRequest.objects.filter(
-                client=client, 
-                status='PENDING'
-            ).count(),
-            'active_assignments': Assignment.objects.filter(
-                client=client, 
-                status__in=['CONFIRMED', 'IN_PROGRESS']
-            ).count(),
-            'completed_assignments': Assignment.objects.filter(
-                client=client, 
-                status='COMPLETED', 
-                completed_at__gte=thirty_days_ago
-            ).count(),
-            'total_spent': Payment.objects.filter(
-                assignment__client=client,
-                status='COMPLETED',
-                payment_date__gte=thirty_days_ago
-            ).aggregate(total=Sum('amount'))['total'] or 0
-        }
-        
-        # Dernières demandes de devis
-        context['recent_quotes'] = QuoteRequest.objects.filter(
-            client=client
-        ).order_by('-created_at')[:5]
-        
-        # Missions à venir
-        context['upcoming_assignments'] = Assignment.objects.filter(
-            client=client,
-            status__in=['CONFIRMED', 'IN_PROGRESS'],
-            start_time__gte=timezone.now()
-        ).order_by('start_time')[:5]
-        
-        # Derniers paiements
-        context['recent_payments'] = Payment.objects.filter(
-            assignment__client=client
-        ).order_by('-payment_date')[:5]
-        
-        # Notifications non lues
-        context['unread_notifications'] = Notification.objects.filter(
-            recipient=self.request.user,
-            read=False
-        ).order_by('-created_at')[:5]
+        try:
+            client = self.request.user.client_profile
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            
+            # Statistiques de base
+            context['stats'] = {
+                'pending_quotes': QuoteRequest.objects.filter(
+                    client=client, 
+                    status='PENDING'
+                ).count(),
+                'active_assignments': Assignment.objects.filter(
+                    client=client, 
+                    status__in=['CONFIRMED', 'IN_PROGRESS']
+                ).count(),
+                'completed_assignments': Assignment.objects.filter(
+                    client=client, 
+                    status='COMPLETED', 
+                    completed_at__gte=thirty_days_ago
+                ).count(),
+                'total_spent': Payment.objects.filter(
+                    assignment__client=client,
+                    status='COMPLETED',
+                    payment_date__gte=thirty_days_ago
+                ).aggregate(total=Sum('amount'))['total'] or 0
+            }
+            
+            # Données récentes
+            context.update({
+                'recent_quotes': QuoteRequest.objects.filter(
+                    client=client
+                ).select_related(
+                    'service_type',
+                    'source_language',
+                    'target_language'
+                ).order_by('-created_at')[:5],
+                
+                'upcoming_assignments': Assignment.objects.filter(
+                    client=client,
+                    status__in=['CONFIRMED', 'IN_PROGRESS'],
+                    start_time__gte=timezone.now()
+                ).select_related(
+                    'interpreter',
+                    'service_type',
+                    'source_language',
+                    'target_language'
+                ).order_by('start_time')[:5],
+                
+                'recent_payments': Payment.objects.filter(
+                    assignment__client=client
+                ).select_related(
+                    'assignment',
+                    'assignment__service_type',
+                    'assignment__interpreter'
+                ).order_by('-payment_date')[:5],
+                
+                'unread_notifications': Notification.objects.filter(
+                    recipient=self.request.user,
+                    read=False
+                ).order_by('-created_at')[:5],
+                
+                'client_profile': client
+            })
+
+        except Exception as e:
+            logger.error(
+                "Error loading client dashboard data",
+                exc_info=True,
+                extra={
+                    'user_id': self.request.user.id,
+                    'error': str(e)
+                }
+            )
+            messages.error(
+                self.request,
+                "There was a problem loading your dashboard data. Please refresh the page or contact support if the problem persists."
+            )
+            context.update({
+                'error_loading_data': True,
+                'stats': {
+                    'pending_quotes': 0,
+                    'active_assignments': 0,
+                    'completed_assignments': 0,
+                    'total_spent': 0
+                }
+            })
         
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if not User.is_authenticated:
+            return self.handle_no_permission()
+            
+        response = super().dispatch(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            logger.info(
+                f"Client dashboard accessed successfully",
+                extra={
+                    'user_id': request.user.id,
+                    'ip_address': request.META.get('REMOTE_ADDR')
+                }
+            )
+            
+        return response
 class MarkNotificationReadView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
@@ -612,7 +681,6 @@ class ClientRequiredMixin(UserPassesTestMixin):
     """Mixin to ensure user is a client"""
     def test_func(self):
         return self.request.user.role == 'CLIENT'
-
 class QuoteRequestListView(LoginRequiredMixin, ClientRequiredMixin, ListView):
     """
     Display all quote requests for the client with filtering and pagination
@@ -653,15 +721,28 @@ class QuoteRequestListView(LoginRequiredMixin, ClientRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Add filter form
         context['filter_form'] = QuoteFilterForm(self.request.GET)
         
+        # Add choices for dropdowns
+        context['status_choices'] = QuoteRequest.Status.choices
+        # Pour le service_type, on doit faire une requête car c'est un modèle
+        context['service_types'] = ServiceType.objects.filter(active=True).values_list('id', 'name')
+        
         # Add statistics
+        base_queryset = self.get_queryset()
         context['stats'] = {
-            'pending_count': self.get_queryset().filter(status='PENDING').count(),
-            'processing_count': self.get_queryset().filter(status='PROCESSING').count(),
-            'quoted_count': self.get_queryset().filter(status='QUOTED').count(),
-            'accepted_count': self.get_queryset().filter(status='ACCEPTED').count()
+            'pending_count': base_queryset.filter(status=QuoteRequest.Status.PENDING).count(),
+            'processing_count': base_queryset.filter(status=QuoteRequest.Status.PROCESSING).count(),
+            'quoted_count': base_queryset.filter(status=QuoteRequest.Status.QUOTED).count(),
+            'accepted_count': base_queryset.filter(status=QuoteRequest.Status.ACCEPTED).count()
         }
+
+        # Add current filters to context for pagination
+        context['current_filters'] = self.request.GET.dict()
+        if 'page' in context['current_filters']:
+            del context['current_filters']['page']
+            
         return context
 
 class QuoteRequestCreateView(LoginRequiredMixin, ClientRequiredMixin, CreateView):
@@ -878,7 +959,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             user_form.save()
             client_form.save()
             messages.success(request, 'Your profile has been updated successfully.')
-            return redirect('profile')
+            return redirect('dbdint:client_profile_edit')
         
         return self.render_to_response(
             self.get_context_data(

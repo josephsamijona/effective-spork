@@ -7,17 +7,17 @@ app_name = 'dbdint'
 
 urlpatterns = [
     # Public Pages
-    path('', views.PublicQuoteRequestView.as_view(), name='home'),
+    path('home', views.PublicQuoteRequestView.as_view(), name='home'),
     path('request-quote/success/', views.QuoteRequestSuccessView.as_view(), name='quote_request_success'),
     path('contact/', views.ContactView.as_view(), name='contact'),
     path('contact/success/', views.ContactSuccessView.as_view(), name='contact_success'),
 
     # Authentication
-    path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('', views.CustomLoginView.as_view(), name='login'),
     path('register/choose/', 
      views.ChooseRegistrationTypeView.as_view(), 
      name='choose_registration'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='dbdint:home'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='dbdint:login'), name='logout'),
     
     # Client Registration
     path('client/register/', views.ClientRegistrationView.as_view(), name='client_register'),
@@ -54,7 +54,7 @@ urlpatterns = [
     path('profile/notifications/', views.NotificationPreferencesView.as_view(), name='notification_preferences'),
     
     # Dashboards
-    path('dashboard/client/', views.ClientDashboardView, name='client_dashboard'),
+    path('dashboard/client/', views.ClientDashboardView.as_view(), name='client_dashboard'),
     path('dashboard/interpreter/', views.InterpreterDashboardView, name='interpreter_dashboard'),
     
     # Quote Management (Client)
@@ -67,7 +67,7 @@ urlpatterns = [
     # Assignment Management (Client)
     path('client/assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='client_assignment_detail'),
     
-    path('clienprofile/', views.ProfileView.as_view(), name='profile'),
+    path('clienprofile/', views.ProfileView.as_view(), name='client_profile_edit'),
     path('client_profile/password/', views.ProfilePasswordChangeView.as_view(), name='client_change_password'),
     
     #interpreter

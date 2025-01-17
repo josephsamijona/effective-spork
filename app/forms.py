@@ -11,7 +11,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import PasswordChangeForm
 from .models import NotificationPreference
 
-
+from django.contrib.auth import authenticate
 from .models import User, Interpreter, Language
 from .models import (
     User,
@@ -132,13 +132,34 @@ class LoginForm(AuthenticationForm):
         'placeholder': 'Enter your password'
     }))
 
-    def __init__(self, *args, **kwargs):
-        super(LoginForm, self).__init__(*args, **kwargs)
-        # Nous utilisons email comme nom d'utilisateur
-        self.fields['username'].label = 'Email'
+    def clean(self):
+        # Récupère l'email entré par l'utilisateur
+        email = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
 
+        if email and password:
+            # Cherche l'utilisateur par email
+            try:
+                user = User.objects.get(email=email)
+                # Met à jour le username avec celui trouvé
+                self.cleaned_data['username'] = user.username
+                # Authentifie avec le username réel
+                self.user_cache = authenticate(self.request, username=user.username, password=password)
+                if self.user_cache is None:
+                    raise forms.ValidationError("Invalid email or password.")
+            except User.DoesNotExist:
+                raise forms.ValidationError("Invalid email or password.")
+
+        return self.cleaned_data
 class ClientRegistrationForm1(forms.ModelForm):
     """First step: Basic user information"""
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Choose your username'
+        })
+    )
     email = forms.EmailField(widget=forms.EmailInput(attrs={
         'class': 'form-control',
         'placeholder': 'Enter your email'
@@ -160,7 +181,7 @@ class ClientRegistrationForm1(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'phone']
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone']
         widgets = {
             'first_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -176,18 +197,32 @@ class ClientRegistrationForm1(forms.ModelForm):
             })
         }
 
-    def clean_password2(self):
-        password1 = self.cleaned_data.get("password1")
-        password2 = self.cleaned_data.get("password2")
-        if password1 and password2 and password1 != password2:
-            raise forms.ValidationError("Passwords don't match")
-        return password2
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username is already taken")
+        
+        # Vérifier le format du username
+        if not username.isalnum():
+            raise forms.ValidationError("Username can only contain letters and numbers")
+        
+        if len(username) < 3:
+            raise forms.ValidationError("Username must be at least 3 characters long")
+            
+        return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already registered")
         return email
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
 
 class ClientRegistrationForm2(forms.ModelForm):
     """Second step: Company information"""
@@ -216,14 +251,18 @@ class ClientRegistrationForm2(forms.ModelForm):
                 'placeholder': 'Enter ZIP code'
             }),
             'preferred_language': forms.Select(attrs={
-                'class': 'form-control'
+                'class': 'form-control language-select',
+                'aria-label': 'Select your preferred language',
+                'data-placeholder': 'Select language'
             })
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Filtrer les langues actives
         self.fields['preferred_language'].queryset = Language.objects.filter(is_active=True)
-
+        # Ajouter un placeholder vide au début de la liste
+        self.fields['preferred_language'].empty_label = "Select your preferred language"
 class ClientProfileUpdateForm(forms.ModelForm):
     """Form for updating client profile"""
     class Meta:
@@ -299,7 +338,6 @@ class QuoteRequestForm(forms.ModelForm):
     """
     Form for creating a new quote request
     """
-    # Additional fields for better UX
     requested_date = forms.DateTimeField(
         widget=forms.DateTimeInput(attrs={
             'class': 'form-control',
@@ -371,7 +409,7 @@ class QuoteRequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Filter active service types
-        self.fields['service_type'].queryset = ServiceType.objects.filter(is_active=True)
+        self.fields['service_type'].queryset = ServiceType.objects.filter(active=True)
         
         # Filter active languages
         active_languages = Language.objects.filter(is_active=True)
@@ -489,13 +527,11 @@ class QuoteFilterForm(forms.Form):
     )
 
     service_type = forms.ModelChoiceField(
-        queryset=ServiceType.objects.filter(active=True),  # Changé de is_active à active
+        queryset=ServiceType.objects.filter(active=True),
         required=False,
         empty_label="All Services",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    
-# forms.py
 
 
 class UserProfileForm(forms.ModelForm):

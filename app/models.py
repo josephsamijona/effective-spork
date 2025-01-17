@@ -133,12 +133,12 @@ class ServiceType(models.Model):
 
 class QuoteRequest(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', _('En attente')
-        PROCESSING = 'PROCESSING', _('En cours de traitement')
-        QUOTED = 'QUOTED', _('Devis envoyé')
-        ACCEPTED = 'ACCEPTED', _('Accepté')
-        REJECTED = 'REJECTED', _('Rejeté')
-        EXPIRED = 'EXPIRED', _('Expiré')
+        PENDING = 'PENDING', _('Pending')
+        PROCESSING = 'PROCESSING', _('Processing')
+        QUOTED = 'QUOTED', _('Quoted')
+        ACCEPTED = 'ACCEPTED', _('Accepted')
+        REJECTED = 'REJECTED', _('Rejected')
+        EXPIRED = 'EXPIRED', _('Expired')
 
     client = models.ForeignKey(Client, on_delete=models.PROTECT)
     service_type = models.ForeignKey(ServiceType, on_delete=models.PROTECT)
@@ -157,12 +157,12 @@ class QuoteRequest(models.Model):
 
 class Quote(models.Model):
     class Status(models.TextChoices):
-        DRAFT = 'DRAFT', _('Brouillon')
-        SENT = 'SENT', _('Envoyé')
-        ACCEPTED = 'ACCEPTED', _('Accepté')
-        REJECTED = 'REJECTED', _('Rejeté')
-        EXPIRED = 'EXPIRED', _('Expiré')
-        CANCELLED = 'CANCELLED', _('Annulé')
+        DRAFT = 'DRAFT', _('Draft')
+        SENT = 'SENT', _('Sent')
+        ACCEPTED = 'ACCEPTED', _('Accepted')
+        REJECTED = 'REJECTED', _('Rejected')
+        EXPIRED = 'EXPIRED', _('Expired')
+        CANCELLED = 'CANCELLED', _('Cancelled')
 
     quote_request = models.OneToOneField(QuoteRequest, on_delete=models.PROTECT)
     reference_number = models.CharField(max_length=20, unique=True)
@@ -177,13 +177,13 @@ class Quote(models.Model):
 
 class Assignment(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', _('En attente')
-        ASSIGNED = 'ASSIGNED', _('Assigné')
-        CONFIRMED = 'CONFIRMED', _('Confirmé')
-        IN_PROGRESS = 'IN_PROGRESS', _('En cours')
-        COMPLETED = 'COMPLETED', _('Terminé')
-        CANCELLED = 'CANCELLED', _('Annulé')
-        NO_SHOW = 'NO_SHOW', _('Non présentation')
+        PENDING = 'PENDING', _('Pending')
+        ASSIGNED = 'ASSIGNED', _('Assigned')
+        CONFIRMED = 'CONFIRMED', _('Confirmed')
+        IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
+        COMPLETED = 'COMPLETED', _('Completed')
+        CANCELLED = 'CANCELLED', _('Cancelled')
+        NO_SHOW = 'NO_SHOW', _('No Show')
 
     quote = models.OneToOneField(Quote, on_delete=models.PROTECT, null=True, blank=True)
     interpreter = models.ForeignKey(Interpreter, on_delete=models.PROTECT)
@@ -220,14 +220,15 @@ class AssignmentFeedback(models.Model):
 
 class Payment(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', _('En attente')
-        COMPLETED = 'COMPLETED', _('Complété')
-        FAILED = 'FAILED', _('Échoué')
-        REFUNDED = 'REFUNDED', _('Remboursé')
+        PENDING = 'PENDING', _('Pending')
+        COMPLETED = 'COMPLETED', _('Completed')
+        FAILED = 'FAILED', _('Failed')
+        REFUNDED = 'REFUNDED', _('Refunded')
 
     class PaymentType(models.TextChoices):
-        CLIENT_PAYMENT = 'CLIENT_PAYMENT', _('Paiement client')
-        INTERPRETER_PAYMENT = 'INTERPRETER_PAYMENT', _('Paiement interprète')
+        CLIENT_PAYMENT = 'CLIENT_PAYMENT', _('Client Payment')
+        INTERPRETER_PAYMENT = 'INTERPRETER_PAYMENT', _('Interpreter Payment')
+
 
     quote = models.ForeignKey(Quote, on_delete=models.PROTECT, null=True, blank=True)
     assignment = models.ForeignKey(Assignment, on_delete=models.PROTECT)
@@ -242,12 +243,12 @@ class Payment(models.Model):
 
 class Notification(models.Model):
     class Type(models.TextChoices):
-        QUOTE_REQUEST = 'QUOTE_REQUEST', _('Demande de devis')
-        QUOTE_READY = 'QUOTE_READY', _('Devis prêt')
-        ASSIGNMENT_OFFER = 'ASSIGNMENT_OFFER', _('Offre de mission')
-        ASSIGNMENT_REMINDER = 'ASSIGNMENT_REMINDER', _('Rappel de mission')
-        PAYMENT_RECEIVED = 'PAYMENT_RECEIVED', _('Paiement reçu')
-        SYSTEM = 'SYSTEM', _('Système')
+        QUOTE_REQUEST = 'QUOTE_REQUEST', _('Quote Request')
+        QUOTE_READY = 'QUOTE_READY', _('Quote Ready')
+        ASSIGNMENT_OFFER = 'ASSIGNMENT_OFFER', _('Assignment Offer')
+        ASSIGNMENT_REMINDER = 'ASSIGNMENT_REMINDER', _('Assignment Reminder')
+        PAYMENT_RECEIVED = 'PAYMENT_RECEIVED', _('Payment Received')
+        SYSTEM = 'SYSTEM', _('System')
 
     recipient = models.ForeignKey(User, on_delete=models.CASCADE)
     type = models.CharField(max_length=20, choices=Type.choices)
