@@ -231,20 +231,7 @@ PHONENUMBER_DB_FORMAT = 'INTERNATIONAL'
 CRISPY_ALLOWED_TEMPLATE_PACKS = ('bootstrap5',)
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
-    
-    # Important : ajoutez le middleware au début de la liste
-    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
-    
-    INTERNAL_IPS = [
-        "127.0.0.1",
-    ]
 
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: True,
-    }
-    
     
 # Scheduler Configuration
 SCHEDULER_CONFIG = {
