@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
@@ -178,21 +179,22 @@ class Quote(models.Model):
 
 class Assignment(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', _('Pending')
-        ASSIGNED = 'ASSIGNED', _('Assigned')
-        CONFIRMED = 'CONFIRMED', _('Confirmed')
-        IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
-        COMPLETED = 'COMPLETED', _('Completed')
-        CANCELLED = 'CANCELLED', _('Cancelled')
-        NO_SHOW = 'NO_SHOW', _('No Show')
+        PENDING = 'PENDING', _('Pending')  # Assigné à un interprète, en attente de confirmation
+        CONFIRMED = 'CONFIRMED', _('Confirmed')  # Accepté par l'interprète
+        IN_PROGRESS = 'IN_PROGRESS', _('In Progress')  # Mission en cours
+        COMPLETED = 'COMPLETED', _('Completed')  # Mission terminée
+        CANCELLED = 'CANCELLED', _('Cancelled')  # Refusé par l'interprète
+        NO_SHOW = 'NO_SHOW', _('No Show')  # Client ou interprète absent
 
+    # Relations existantes
     quote = models.OneToOneField(Quote, on_delete=models.PROTECT, null=True, blank=True)
-    interpreter = models.ForeignKey(Interpreter, on_delete=models.PROTECT)
+    interpreter = models.ForeignKey(Interpreter, on_delete=models.PROTECT, null=True, blank=True)  # Modifié pour permettre null
     client = models.ForeignKey(Client, on_delete=models.PROTECT)
     service_type = models.ForeignKey(ServiceType, on_delete=models.PROTECT)
     source_language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='assignments_source')
     target_language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='assignments_target')
     
+    # Champs temporels et localisation
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     location = models.CharField(max_length=255)
@@ -206,11 +208,73 @@ class Assignment(models.Model):
     minimum_hours = models.IntegerField(default=2)
     total_interpreter_payment = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
+    # Informations additionnelles
     notes = models.TextField(blank=True, null=True)
     special_requirements = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'interpreter', 'start_time']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return f"Assignment {self.id} - {self.client} ({self.status})"
+
+    def can_be_confirmed(self):
+        """Vérifie si l'assignment peut être confirmé"""
+        return self.status == self.Status.PENDING
+
+    def can_be_started(self):
+        """Vérifie si l'assignment peut être démarré"""
+        return self.status == self.Status.CONFIRMED
+
+    def can_be_completed(self):
+        """Vérifie si l'assignment peut être marqué comme terminé"""
+        return self.status == self.Status.IN_PROGRESS
+
+    def can_be_cancelled(self):
+        """Vérifie si l'assignment peut être annulé"""
+        return self.status in [self.Status.PENDING, self.Status.CONFIRMED]
+
+    def confirm(self):
+        """Confirme l'assignment"""
+        if self.can_be_confirmed():
+            self.status = self.Status.CONFIRMED
+            self.save()
+            return True
+        return False
+
+    def start(self):
+        """Démarre l'assignment"""
+        if self.can_be_started():
+            self.status = self.Status.IN_PROGRESS
+            self.save()
+            return True
+        return False
+
+    def complete(self):
+        """Marque l'assignment comme terminé"""
+        if self.can_be_completed():
+            self.status = self.Status.COMPLETED
+            self.completed_at = timezone.now()
+            self.save()
+            return True
+        return False
+
+    def cancel(self):
+        """Annule l'assignment"""
+        if self.can_be_cancelled():
+            self.status = self.Status.CANCELLED
+            old_interpreter = self.interpreter
+            self.interpreter = None  # Désassociation de l'interprète
+            self.save()
+            return old_interpreter  # Retourne l'ancien interprète pour la notification
+        return None
 
 class AssignmentFeedback(models.Model):
     assignment = models.OneToOneField(Assignment, on_delete=models.CASCADE)
@@ -368,3 +432,47 @@ class NotificationPreference(models.Model):
             elif hasattr(self.user, 'interpreter_profile') and self.user.interpreter_profile:
                 self.preferred_language = None
         super().save(*args, **kwargs)
+        
+        
+class AssignmentNotification(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='notifications')
+    interpreter = models.ForeignKey(Interpreter, on_delete=models.CASCADE, related_name='assignment_notifications')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['interpreter', 'is_read']),
+            models.Index(fields=['created_at'])
+        ]
+
+    def __str__(self):
+        return f"Notification for {self.assignment} - {self.interpreter}"
+
+    @classmethod
+    def create_for_new_assignment(cls, assignment):
+        """
+        Crée une notification pour un nouvel assignment
+        """
+        return cls.objects.create(
+            assignment=assignment,
+            interpreter=assignment.interpreter
+        )
+
+    @classmethod
+    def get_unread_count(cls, interpreter):
+        """
+        Retourne le nombre de notifications non lues pour un interprète
+        """
+        return cls.objects.filter(
+            interpreter=interpreter,
+            is_read=False
+        ).count()
+
+    def mark_as_read(self):
+        """
+        Marque la notification comme lue
+        """
+        self.is_read = True
+        self.save()

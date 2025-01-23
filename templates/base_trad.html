@@ -215,15 +215,15 @@
     <header class="dashboard-header">
         <h1 class="header-title">{% block header_title %}Dashboard{% endblock %}</h1>
         <div class="header-actions">
-            <div class="notification-badge">
-                <i class="fas fa-bell"></i>
-                {% if unread_notifications_count > 0 %}
-                <span class="notification-count">{{ unread_notifications_count }}</span>
-                {% endif %}
-            </div>
+
             <div class="profile-dropdown">
                 <button class="profile-button" id="profileButton">
-                    <img src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="Profile">
+                    <img 
+                    src="{% if user.interpreter_profile.profile_image %}{{ user.interpreter_profile.profile_image.url }}{% else %}https://cdn-icons-png.flaticon.com/512/3177/3177440.png{% endif %}"
+                    alt="Profile" 
+                    class="profile-image-preview" 
+                    id="profileImagePreview">
+                
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div class="dropdown-menu" id="profileMenu">
@@ -231,12 +231,19 @@
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
-                    <a href="{% url 'dbdint:logout' %}" class="dropdown-item">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </a>
+            
+                    <!-- Remplace le lien Logout par un formulaire POST -->
+                    <form action="{% url 'dbdint:logout' %}" method="POST" style="margin: 0; padding: 0;">
+                        {% csrf_token %}
+                        <!-- Bouton stylé comme un lien du menu dropdown -->
+                        <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left;">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
                 </div>
             </div>
+            
         </div>
     </header>
 

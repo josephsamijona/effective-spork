@@ -766,45 +766,54 @@ class InterpreterRegistrationForm3(forms.ModelForm):
     
 
 class InterpreterProfileForm(forms.ModelForm):
+    # Champs de base (liés au User ou au profil Interprète)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
     email = forms.EmailField()
     phone_number = forms.CharField(max_length=15)
-    
+
     # Champs bancaires
     bank_name = forms.CharField(max_length=100)
     account_holder = forms.CharField(max_length=100)
     account_number = forms.CharField(
         max_length=50,
-        widget=forms.TextInput(attrs={'type': 'password', 'class': 'sensitive-field'})
+        widget=forms.TextInput(attrs={
+            'type': 'password',
+            'class': 'sensitive-field'
+        })
     )
     routing_number = forms.CharField(
         max_length=50,
-        widget=forms.TextInput(attrs={'type': 'password', 'class': 'sensitive-field'})
+        widget=forms.TextInput(attrs={
+            'type': 'password',
+            'class': 'sensitive-field'
+        })
     )
-    
+
     class Meta:
         model = Interpreter
         fields = [
-            'profile_image', 
-            'address', 
-            'city', 
-            'state', 
+            'profile_image',
+            'address',
+            'city',
+            'state',
             'zip_code',
             'bio'
         ]
-    
+
     def __init__(self, *args, **kwargs):
+        # Récupérer l'utilisateur passé en paramètre (dans la view)
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+        # Préremplir certains champs si on a un user
         if user:
             self.fields['first_name'].initial = user.first_name
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
             self.fields['phone_number'].initial = user.phone_number
-            
-            # Initialisation des champs bancaires
-            interpreter = user.interpreter_profile
+
+            interpreter = getattr(user, 'interpreter_profile', None)
             if interpreter:
                 self.fields['bank_name'].initial = interpreter.bank_name
                 self.fields['account_holder'].initial = interpreter.account_holder_name

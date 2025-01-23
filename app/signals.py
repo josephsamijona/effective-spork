@@ -13,6 +13,15 @@ from django.dispatch import receiver
 from .models import Quote, Assignment
 from .tasks import send_quote_status_email, send_assignment_status_email
 
+from .models import Assignment, AssignmentNotification
+
+@receiver(post_save, sender=Assignment)
+def create_assignment_notification(sender, instance, created, **kwargs):
+    if created and instance.interpreter and instance.status == Assignment.Status.PENDING:
+        AssignmentNotification.create_for_new_assignment(instance)
+
+
+
 @receiver(post_save, sender=Quote)
 def handle_quote_status_change(sender, instance, created, **kwargs):
     # Ne pas envoyer d'email si le statut est DRAFT

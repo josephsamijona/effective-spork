@@ -6,6 +6,9 @@
 
 {% block extra_css %}
 <style>
+   /* =============================================
+    *               STYLES GÉNÉRAUX
+    * ============================================= */
    /* Tabs Navigation */
    .settings-nav {
        display: flex;
@@ -18,7 +21,6 @@
        margin-bottom: 2rem;
        gap: 0.5rem;
    }
-
    .settings-nav-item {
        padding: 0.75rem 1.5rem;
        color: white;
@@ -29,11 +31,9 @@
        transition: all 0.3s ease;
        cursor: pointer;
    }
-
    .settings-nav-item.active {
        background: var(--accent-blue);
    }
-
    .settings-nav-item:hover:not(.active) {
        background: rgba(255, 255, 255, 0.1);
    }
@@ -49,12 +49,10 @@
        border: 1px solid rgba(255, 255, 255, 0.2);
        display: none;
    }
-
    .settings-section.active {
        display: block;
        animation: fadeIn 0.3s ease-out;
    }
-
    @keyframes fadeIn {
        from {
            opacity: 0;
@@ -73,7 +71,6 @@
        gap: 2rem;
        margin-bottom: 2rem;
    }
-
    @media (min-width: 768px) {
        .form-grid {
            grid-template-columns: repeat(2, 1fr);
@@ -84,7 +81,6 @@
    .form-group {
        margin-bottom: 2rem;
    }
-
    .form-label {
        font-size: 0.9rem;
        font-weight: 500;
@@ -111,7 +107,6 @@
        box-sizing: border-box;
        margin-top: 0.5rem;
    }
-
    input[type="text"]:focus,
    input[type="email"]:focus,
    input[type="password"]:focus,
@@ -134,7 +129,6 @@
        border-radius: 12px;
        border: 1px solid rgba(255, 255, 255, 0.1);
    }
-
    .profile-image-preview {
        width: 120px;
        height: 120px;
@@ -142,18 +136,15 @@
        object-fit: cover;
        border: 3px solid rgba(255, 255, 255, 0.2);
    }
-
    .profile-image-actions {
        display: flex;
        flex-direction: column;
        gap: 1rem;
    }
-
    /* Hide default file input */
    input[type="file"] {
        display: none;
    }
-
    .upload-btn {
        display: inline-flex;
        align-items: center;
@@ -167,7 +158,6 @@
        transition: all 0.3s ease;
        font-size: 0.875rem;
    }
-
    .upload-btn:hover {
        background: rgba(255, 255, 255, 0.2);
        transform: translateY(-1px);
@@ -180,13 +170,11 @@
        width: 50px;
        height: 26px;
    }
-
    .toggle-switch input {
        opacity: 0;
        width: 0;
        height: 0;
    }
-
    .toggle-slider {
        position: absolute;
        cursor: pointer;
@@ -198,7 +186,6 @@
        transition: 0.4s;
        border-radius: 34px;
    }
-
    .toggle-slider:before {
        position: absolute;
        content: "";
@@ -210,11 +197,9 @@
        transition: 0.4s;
        border-radius: 50%;
    }
-
    input:checked + .toggle-slider {
        background-color: var(--accent-blue);
    }
-
    input:checked + .toggle-slider:before {
        transform: translateX(24px);
    }
@@ -225,7 +210,6 @@
        gap: 1rem;
        margin-bottom: 2rem;
    }
-
    .notification-item {
        display: flex;
        justify-content: space-between;
@@ -234,16 +218,13 @@
        background: rgba(255, 255, 255, 0.05);
        border-radius: 8px;
    }
-
    .notification-info {
        flex-grow: 1;
    }
-
    .notification-title {
        font-weight: 500;
        margin-bottom: 0.25rem;
    }
-
    .notification-description {
        font-size: 0.875rem;
        opacity: 0.8;
@@ -261,7 +242,6 @@
        background-position: right 0.7rem center;
        background-size: 1em;
    }
-
    select option {
        background-color: #1a1a1a;
        color: white;
@@ -286,12 +266,10 @@
        transition: all 0.3s ease;
        margin-top: 2rem;
    }
-
    .save-button:hover {
        background: var(--secondary-blue);
        transform: translateY(-1px);
    }
-
    .save-button:active {
        transform: translateY(0);
    }
@@ -307,7 +285,6 @@
        align-items: center;
        gap: 0.5rem;
    }
-
    .section-title i {
        color: var(--accent-blue);
    }
@@ -339,7 +316,6 @@
            opacity: 1;
        }
    }
-
    .success-message {
        position: fixed;
        top: 80px;
@@ -369,10 +345,35 @@
        color: white;
        border: 1px solid rgba(255, 255, 255, 0.2);
    }
+
+   /* Champs sensibles */
+   .sensitive-field-container {
+       position: relative;
+   }
+   .toggle-visibility {
+       position: absolute;
+       right: 10px;
+       top: 50%;
+       transform: translateY(-50%);
+       background: none;
+       border: none;
+       color: rgba(255, 255, 255, 0.7);
+       cursor: pointer;
+       padding: 5px;
+   }
+   .toggle-visibility:hover {
+       color: white;
+   }
+   .sensitive-field {
+       padding-right: 40px !important;
+   }
 </style>
 {% endblock %}
+
 {% block content %}
-<!-- Settings Navigation -->
+<!-- ============================================= -->
+<!--                Settings Navigation            -->
+<!-- ============================================= -->
 <nav class="settings-nav">
     <div class="settings-nav-item active" data-target="profile">
         <i class="fas fa-user"></i> Profile
@@ -385,7 +386,9 @@
     </div>
 </nav>
 
-<!-- Profile Section -->
+<!-- ============================================= -->
+<!--                   Profile Section             -->
+<!-- ============================================= -->
 <form method="POST" action="{% url 'dbdint:interpreter_settings' %}" enctype="multipart/form-data" class="settings-section active" id="profile-section">
     {% csrf_token %}
     <input type="hidden" name="action" value="update_profile">
@@ -397,12 +400,16 @@
 
     <!-- Profile Image Upload -->
     <div class="profile-image-upload">
-        <img src="{% if user.interpreter_profile.profile_image %}{{ user.interpreter_profile.profile_image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
-            alt="Profile" class="profile-image-preview" id="profileImagePreview">
+        <img 
+        src="{% if user.interpreter_profile.profile_image %}{{ user.interpreter_profile.profile_image.url }}{% else %}https://cdn-icons-png.flaticon.com/512/3177/3177440.png{% endif %}"
+        alt="Profile" 
+        class="profile-image-preview" 
+        id="profileImagePreview">
+    
         <div class="profile-image-actions">
             <label class="upload-btn">
                 <i class="fas fa-upload"></i> Upload New Photo
-                <input type="file" name="profile_image" id="profile_image" accept="image/*" style="display: none;">
+                <input type="file" name="profile_image" id="profile_image" accept="image/*">
             </label>
             <small style="opacity: 0.8">Maximum file size: 5MB</small>
         </div>
@@ -469,11 +476,23 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Account Number</label>
-                {{ profile_form.account_number }}
+                <!-- Conteneur + le champ + le bouton -->
+                <div class="sensitive-field-container">
+                    {{ profile_form.account_number }}
+                    <button type="button" class="toggle-visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Routing Number</label>
-                {{ profile_form.routing_number }}
+                <!-- Conteneur + le champ + le bouton -->
+                <div class="sensitive-field-container">
+                    {{ profile_form.routing_number }}
+                    <button type="button" class="toggle-visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -483,7 +502,9 @@
     </button>
 </form>
 
-<!-- Notifications Section -->
+<!-- ============================================= -->
+<!--               Notifications Section           -->
+<!-- ============================================= -->
 <form method="POST" action="{% url 'dbdint:interpreter_settings' %}" class="settings-section" id="notifications-section">
     {% csrf_token %}
     <input type="hidden" name="action" value="update_notifications">
@@ -505,7 +526,6 @@
                 <span class="toggle-slider"></span>
             </label>
         </div>
-
         <div class="notification-item">
             <div class="notification-info">
                 <div class="notification-title">Assignment Updates</div>
@@ -516,7 +536,6 @@
                 <span class="toggle-slider"></span>
             </label>
         </div>
-
         <div class="notification-item">
             <div class="notification-info">
                 <div class="notification-title">Payment Updates</div>
@@ -539,7 +558,6 @@
                 <span class="toggle-slider"></span>
             </label>
         </div>
-
         <div class="notification-item">
             <div class="notification-info">
                 <div class="notification-title">Assignment Notifications</div>
@@ -550,7 +568,6 @@
                 <span class="toggle-slider"></span>
             </label>
         </div>
-
         <div class="notification-item">
             <div class="notification-info">
                 <div class="notification-title">Payment Notifications</div>
@@ -578,7 +595,9 @@
     </button>
 </form>
 
-<!-- Security Section -->
+<!-- ============================================= -->
+<!--                 Security Section              -->
+<!-- ============================================= -->
 <form method="POST" action="{% url 'dbdint:interpreter_settings' %}" class="settings-section" id="security-section">
     {% csrf_token %}
     <input type="hidden" name="action" value="change_password">
@@ -595,7 +614,6 @@
             <div class="error-message">{{ password_form.old_password.errors.0 }}</div>
         {% endif %}
     </div>
-
     <div class="form-group">
         <label class="form-label">New Password</label>
         {{ password_form.new_password1 }}
@@ -603,7 +621,6 @@
             <div class="error-message">{{ password_form.new_password1.errors.0 }}</div>
         {% endif %}
     </div>
-
     <div class="form-group">
         <label class="form-label">Confirm New Password</label>
         {{ password_form.new_password2 }}
@@ -621,57 +638,125 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Navigation Tabs
-    const navItems = document.querySelectorAll('.settings-nav-item');
-    const sections = document.querySelectorAll('.settings-section');
+   // Navigation Tabs
+   const navItems = document.querySelectorAll('.settings-nav-item');
+   const sections = document.querySelectorAll('.settings-section');
 
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const target = item.dataset.target;
-            
-            // Update active states
-            navItems.forEach(nav => nav.classList.remove('active'));
-            sections.forEach(section => section.classList.remove('active'));
-            
-            item.classList.add('active');
-            document.getElementById(`${target}-section`).classList.add('active');
-        });
-    });
+   navItems.forEach(item => {
+       item.addEventListener('click', () => {
+           const target = item.dataset.target;
+           
+           // Update active states
+           navItems.forEach(nav => nav.classList.remove('active'));
+           sections.forEach(section => section.classList.remove('active'));
+           
+           item.classList.add('active');
+           document.getElementById(`${target}-section`).classList.add('active');
+       });
+   });
 
-    // Profile Image Preview
-    const profileImageInput = document.querySelector('input[type="file"]');
-    const profileImagePreview = document.getElementById('profileImagePreview');
+   // Profile Image Preview
+   const profileImageInput = document.querySelector('input[type="file"]#profile_image');
+   const profileImagePreview = document.getElementById('profileImagePreview');
 
-    if (profileImageInput && profileImagePreview) {
-        profileImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImagePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
+   if (profileImageInput && profileImagePreview) {
+       profileImageInput.addEventListener('change', function(e) {
+           const file = e.target.files[0];
+           if (file) {
+               const reader = new FileReader();
+               reader.onload = function(e) {
+                   profileImagePreview.src = e.target.result;
+               };
+               reader.readAsDataURL(file);
+           }
+       });
+   }
 
-    // Show success messages
-    {% if messages %}
-        {% for message in messages %}
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-message';
-            successMessage.innerHTML = `
-                <i class="fas fa-check-circle"></i>
-                {{ message }}
-            `;
-            document.body.appendChild(successMessage);
-            
-            setTimeout(() => {
-                successMessage.style.opacity = '0';
-                setTimeout(() => successMessage.remove(), 300);
-            }, 3000);
-        {% endfor %}
-    {% endif %}
+   // ================================
+   // Fonction qui toggle la visibilité
+   // ================================
+   function toggleFieldVisibility(button) {
+       const field = button.previousElementSibling;
+       const icon = button.querySelector('i');
+       
+       if (field.type === 'password') {
+           field.type = 'text';
+           icon.classList.remove('fa-eye');
+           icon.classList.add('fa-eye-slash');
+
+           // Avertissement auto-hide
+           const warning = document.createElement('span');
+           warning.className = 'field-auto-hide-warning';
+           warning.innerHTML = '<i class="fas fa-clock"></i> Auto-hide in 30s';
+           button.parentElement.appendChild(warning);
+
+           // Auto-masquer après 30 secondes
+           setTimeout(() => {
+               field.type = 'password';
+               icon.classList.remove('fa-eye-slash');
+               icon.classList.add('fa-eye');
+               if (warning) warning.remove();
+           }, 30000);
+       } else {
+           field.type = 'password';
+           icon.classList.remove('fa-eye-slash');
+           icon.classList.add('fa-eye');
+
+           // Supprimer l'avertissement s'il existe
+           const warning = button.parentElement.querySelector('.field-auto-hide-warning');
+           if (warning) warning.remove();
+       }
+   }
+
+   // ================================
+   // Gérer le clic sur les boutons
+   // ================================
+   const toggleButtons = document.querySelectorAll('.toggle-visibility');
+   toggleButtons.forEach(button => {
+       button.addEventListener('click', () => {
+           toggleFieldVisibility(button);
+       });
+   });
+
+   // Show success messages
+   {% if messages %}
+       {% for message in messages %}
+           const successMessage = document.createElement('div');
+           successMessage.className = 'success-message';
+           successMessage.innerHTML = `
+               <i class="fas fa-check-circle"></i>
+               {{ message }}
+           `;
+           document.body.appendChild(successMessage);
+           
+           setTimeout(() => {
+               successMessage.style.opacity = '0';
+               setTimeout(() => successMessage.remove(), 300);
+           }, 3000);
+       {% endfor %}
+   {% endif %}
+
+   // Gestion des tooltips pour les champs sensibles (optionnel)
+   document.querySelectorAll('.sensitive-field-container').forEach(container => {
+       const tooltip = document.createElement('div');
+       tooltip.className = 'secure-field-tooltip';
+       tooltip.textContent = 'Click the eye icon to toggle visibility';
+       container.appendChild(tooltip);
+   });
+
+   // Masquer automatiquement les champs sensibles lors de la perte de focus
+   document.querySelectorAll('.sensitive-field').forEach(field => {
+       field.addEventListener('blur', function() {
+           if (this.type === 'text') {
+               const button = this.parentElement.querySelector('.toggle-visibility');
+               setTimeout(() => {
+                   this.type = 'password';
+                   button.querySelector('i').classList.remove('fa-eye-slash');
+                   button.querySelector('i').classList.add('fa-eye');
+               }, 1000);
+           }
+       });
+   });
 });
 </script>
 {% endblock %}

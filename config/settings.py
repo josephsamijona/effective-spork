@@ -221,7 +221,7 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 
 # Login/Logout URLs
-LOGIN_URL = 'login'
+LOGIN_URL = 'dbdint:login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_URL = 'logout'
 LOGOUT_REDIRECT_URL = 'home'
