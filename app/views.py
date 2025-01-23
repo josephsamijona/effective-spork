@@ -20,7 +20,11 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
-
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import TemplateView
+from .models import NotificationPreference, Interpreter
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -1110,7 +1114,7 @@ class InterpreterRegistrationStep3View(FormView):
         return super().form_invalid(form)
 
 
-class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
+class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin,TemplateView):
     template_name = 'trad/home.html'
     
     def test_func(self):
@@ -1203,15 +1207,36 @@ class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin):
 # views.py
 
 
-class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin):
+class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'trad/settings.html'
     
     def test_func(self):
         return self.request.user.role == 'INTERPRETER'
+
+    def get_notification_preferences(self):
+        try:
+            return NotificationPreference.objects.get(user=self.request.user)
+        except NotificationPreference.DoesNotExist:
+            return NotificationPreference.objects.create(
+                user=self.request.user,
+                email_quote_updates=True,
+                email_assignment_updates=True,
+                email_payment_updates=True,
+                sms_enabled=False,
+                quote_notifications=True,
+                assignment_notifications=True,
+                payment_notifications=True,
+                system_notifications=True,
+                notification_frequency='immediate',
+                preferred_language=None
+            )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        
+        # S'assure que les préférences de notification existent
+        notification_preference = self.get_notification_preferences()
         
         if self.request.POST:
             context['profile_form'] = InterpreterProfileForm(
@@ -1222,7 +1247,7 @@ class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin):
             )
             context['notification_form'] = NotificationPreferenceForm(
                 self.request.POST,
-                instance=user.notification_preferences
+                instance=notification_preference
             )
             context['password_form'] = CustomPasswordtradChangeForm(user, self.request.POST)
         else:
@@ -1231,7 +1256,7 @@ class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin):
                 instance=user.interpreter_profile
             )
             context['notification_form'] = NotificationPreferenceForm(
-                instance=user.notification_preferences
+                instance=notification_preference
             )
             context['password_form'] = CustomPasswordtradChangeForm(user)
         
@@ -1255,33 +1280,30 @@ class InterpreterSettingsView(LoginRequiredMixin, UserPassesTestMixin):
                 user.save()
                 
                 # Mise à jour des informations bancaires
-                bank_info = user.interpreter_profile.bank_info
-                bank_info.bank_name = profile_form.cleaned_data['bank_name']
-                bank_info.account_holder = profile_form.cleaned_data['account_holder']
-                bank_info.account_number = profile_form.cleaned_data['account_number']
-                bank_info.routing_number = profile_form.cleaned_data['routing_number']
-                bank_info.save()
+                profile.bank_name = profile_form.cleaned_data['bank_name']
+                profile.account_holder_name = profile_form.cleaned_data['account_holder']
+                profile.account_number = profile_form.cleaned_data['account_number']
+                profile.routing_number = profile_form.cleaned_data['routing_number']
                 
                 profile.save()
                 messages.success(request, 'Profile updated successfully!')
-                return redirect('interpreter_settings')
+                return redirect('dbdint:interpreter_settings')
                 
         elif action == 'update_notifications':
             notification_form = context['notification_form']
             if notification_form.is_valid():
                 notification_form.save()
                 messages.success(request, 'Notification preferences updated successfully!')
-                return redirect('interpreter_settings')
+                return redirect('dbdint:interpreter_settings')
                 
         elif action == 'change_password':
             password_form = context['password_form']
             if password_form.is_valid():
                 password_form.save()
                 messages.success(request, 'Password changed successfully!')
-                return redirect('interpreter_settings')
+                return redirect('dbdint:interpreter_settings')
         
         return self.render_to_response(context)
-    
     
 # views.py
 

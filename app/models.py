@@ -44,6 +44,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=Roles.choices)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     registration_complete = models.BooleanField(default=False)
@@ -322,7 +323,7 @@ class NotificationPreference(models.Model):
     email_assignment_updates = models.BooleanField(default=True, help_text="Receive email notifications about assignment updates")
     email_payment_updates = models.BooleanField(default=True, help_text="Receive email notifications about payment status")
     
-    # SMS Notifications (si implémenté dans le futur)
+    # SMS Notifications
     sms_enabled = models.BooleanField(default=False, help_text="Enable SMS notifications")
     
     # In-App Notifications
@@ -335,7 +336,8 @@ class NotificationPreference(models.Model):
     preferred_language = models.ForeignKey(
         Language, 
         on_delete=models.SET_NULL, 
-        null=True, 
+        null=True,
+        blank=True,
         help_text="Preferred language for notifications"
     )
     
@@ -359,6 +361,10 @@ class NotificationPreference(models.Model):
         return f"Notification preferences for {self.user.email}"
 
     def save(self, *args, **kwargs):
-        if not self.preferred_language and self.user.client_profile:
-            self.preferred_language = self.user.client_profile.preferred_language
+        # On vérifie si l'utilisateur est un client ou un interprète
+        if not self.preferred_language:
+            if hasattr(self.user, 'client_profile') and self.user.client_profile:
+                self.preferred_language = self.user.client_profile.preferred_language
+            elif hasattr(self.user, 'interpreter_profile') and self.user.interpreter_profile:
+                self.preferred_language = None
         super().save(*args, **kwargs)

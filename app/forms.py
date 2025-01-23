@@ -774,8 +774,14 @@ class InterpreterProfileForm(forms.ModelForm):
     # Champs bancaires
     bank_name = forms.CharField(max_length=100)
     account_holder = forms.CharField(max_length=100)
-    account_number = forms.CharField(max_length=50)
-    routing_number = forms.CharField(max_length=50)
+    account_number = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={'type': 'password', 'class': 'sensitive-field'})
+    )
+    routing_number = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={'type': 'password', 'class': 'sensitive-field'})
+    )
     
     class Meta:
         model = Interpreter
@@ -796,11 +802,14 @@ class InterpreterProfileForm(forms.ModelForm):
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
             self.fields['phone_number'].initial = user.phone_number
-            if hasattr(user.interpreter_profile, 'bank_info'):
-                self.fields['bank_name'].initial = user.interpreter_profile.bank_info.bank_name
-                self.fields['account_holder'].initial = user.interpreter_profile.bank_info.account_holder
-                self.fields['account_number'].initial = user.interpreter_profile.bank_info.account_number
-                self.fields['routing_number'].initial = user.interpreter_profile.bank_info.routing_number
+            
+            # Initialisation des champs bancaires
+            interpreter = user.interpreter_profile
+            if interpreter:
+                self.fields['bank_name'].initial = interpreter.bank_name
+                self.fields['account_holder'].initial = interpreter.account_holder_name
+                self.fields['account_number'].initial = interpreter.account_number
+                self.fields['routing_number'].initial = interpreter.routing_number
 
 class NotificationPreferenceForm(forms.ModelForm):
     class Meta:

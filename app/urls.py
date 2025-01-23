@@ -55,7 +55,7 @@ urlpatterns = [
     
     # Dashboards
     path('dashboard/client/', views.ClientDashboardView.as_view(), name='client_dashboard'),
-    path('dashboard/interpreter/', views.InterpreterDashboardView, name='interpreter_dashboard'),
+    path('dashboard/interpreter/', views.InterpreterDashboardView.as_view(), name='interpreter_dashboard'),
     
     # Quote Management (Client)
     path('client/quotes/', views.QuoteRequestListView.as_view(), name='client_quote_list'),
@@ -86,11 +86,11 @@ urlpatterns = [
         views.InterpreterRegistrationStep3View.as_view(), 
         name='interpreter_registration_step3'
     ),
-    path('interpreter/settings/', 
-        views.InterpreterSettingsView, 
-        name='interpreter_settings'),
+  path('interpreter/settings/', 
+    views.InterpreterSettingsView.as_view(), 
+    name='interpreter_settings'),
     
-        path(
+    path(
         'interpreter/schedule/',
         views.InterpreterScheduleView.as_view(),
         name='interpreter_schedule'
