@@ -50,3 +50,7 @@ PyPDF2
 django-apscheduler
 icalendar
 pytz
+
+django-storages
+supabase
+

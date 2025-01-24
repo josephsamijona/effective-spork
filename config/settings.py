@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 import dj_database_url
+from supabase import create_client
 
 # Charger les variables d'environnement
 load_dotenv()
@@ -54,7 +55,7 @@ LOGGING = {
 INSTALLED_APPS = [
     # Local apps (mettre en premier)
     "app",
-    
+    'storages',
     # Django built-in apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -155,9 +156,6 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Media files
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -255,3 +253,25 @@ SCHEDULER_AUTOSTART = True
 SCHEDULER_REMOVE_EXISTING_JOBS = True
 AUTH_USER_MODEL = 'app.User'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+#stockage
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+
+STORAGES = {
+   "default": {
+       "BACKEND": "django.core.files.storage.FileSystemStorage",
+       "OPTIONS": {
+           "location": "app.custom_storage.SupabaseStorage"
+       }
+   },
+   "staticfiles": {
+       "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+   }
+}
+
+# Media files
+# Pour la production avec Supabase Storage
+MEDIA_URL = f'{SUPABASE_URL}/storage/v1/object/public/media/'
+MEDIA_ROOT = None  # Pas de stockage local en production
