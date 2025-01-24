@@ -5,7 +5,10 @@
 {% block header_title %}Schedule{% endblock %}
 
 {% block extra_css %}
-<link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.11.3/main.min.css' rel='stylesheet' />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.11.3/main.min.css" rel="stylesheet" />
+
+<!-- Custom CSS -->
+<link href="{% static 'css/schedule.css' %}" rel="stylesheet" />
 <style>
     /* Container principal */
     .schedule-container {
@@ -354,42 +357,34 @@
         <!-- Upcoming Assignments -->
         <div class="upcoming-assignments">
             <h2 class="section-title">
-                <i class="fas fa-clock"></i>
-                Upcoming Assignments
+                <i class="fas fa-clock"></i> Upcoming Assignments
             </h2>
-            
             <div class="assignment-list">
                 {% for assignment in upcoming_assignments %}
-                <div class="assignment-card">
-                    <div class="assignment-header">
-                        <span class="assignment-status status-{{ assignment.status|lower }}">
-                            {{ assignment.get_status_display }}
-                        </span>
-                        <span class="assignment-time">
-                            {{ assignment.start_time|date:"M d, g:i A" }}
-                        </span>
-                    </div>
-                    <div class="assignment-details">
-                        <strong>{{ assignment.client.full_name }}</strong>
-                        <div>{{ assignment.service_type.name }}</div>
-                        <div>{{ assignment.source_language.name }} → {{ assignment.target_language.name }}</div>
-                        <div class="assignment-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            {{ assignment.city }}, {{ assignment.state }}
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <span class="assignment-status status-{{ assignment.status|lower }}">
+                                {{ assignment.get_status_display }}
+                            </span>
+                            <span class="assignment-time">
+                                {{ assignment.start_time|date:"M d, g:i A" }}
+                            </span>
                         </div>
-                        {% if assignment.special_requirements %}
-                        <div style="margin-top: 0.5rem; color: #fbd38d;">
-                            <i class="fas fa-exclamation-circle"></i>
-                            Special requirements
+                        <div class="assignment-details">
+                            <div class="detail-languages">
+                                {{ assignment.source_language.name }} → {{ assignment.target_language.name }}
+                            </div>
+                            <div class="detail-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ assignment.city }}, {{ assignment.state }}
+                            </div>
                         </div>
-                        {% endif %}
                     </div>
-                </div>
                 {% empty %}
-                <div class="empty-state">
-                    <i class="fas fa-calendar-check"></i>
-                    <p>No upcoming assignments</p>
-                </div>
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-check"></i>
+                        <p>No upcoming assignments</p>
+                    </div>
                 {% endfor %}
             </div>
         </div>
@@ -411,8 +406,11 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.11.3/main.min.js'></script>
-<script src='https://unpkg.com/@popperjs/core@2'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.11.3/main.min.js"></script>
+<!-- Popper.js for tooltips -->
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<!-- Custom JS -->
+<script src="{% static 'js/schedule.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');

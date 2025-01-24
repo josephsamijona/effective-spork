@@ -74,7 +74,7 @@ from .models import (
     PublicQuoteRequest,
     Quote,
     QuoteRequest,
-    User,ServiceType
+    User,ServiceType,AssignmentNotification
 )
 import logging
 
@@ -1455,8 +1455,10 @@ def get_calendar_assignments(request):
 
 
 
+
+
 class AssignmentListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    template_name = 'trad/assignments.html'
+    template_name = 'trad/assignment.html'
     context_object_name = 'assignments'
 
     def test_func(self):
@@ -1465,35 +1467,34 @@ class AssignmentListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_queryset(self):
         return Assignment.objects.filter(
             interpreter=self.request.user.interpreter_profile
-        ).exclude(
-            status__in=['CANCELLED', 'NO_SHOW']
         ).order_by('start_time')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         interpreter = self.request.user.interpreter_profile
+        now = timezone.now()
         
-        # Missions en attente de confirmation
+        # Assignments en attente de confirmation (PENDING)
         context['pending_assignments'] = Assignment.objects.filter(
             interpreter=interpreter,
             status='PENDING'
         ).order_by('start_time')
         
-        # Missions à venir (confirmées)
+        # Assignments confirmés à venir
         context['upcoming_assignments'] = Assignment.objects.filter(
             interpreter=interpreter,
             status='CONFIRMED',
-            start_time__gt=timezone.now()
+            start_time__gt=now
         ).order_by('start_time')
         
-        # Missions en cours
+        # Assignments en cours
         context['in_progress_assignments'] = Assignment.objects.filter(
             interpreter=interpreter,
             status='IN_PROGRESS'
         ).order_by('start_time')
         
-        # Missions terminées (derniers 30 jours)
-        thirty_days_ago = timezone.now() - timedelta(days=30)
+        # Assignments terminés (derniers 30 jours)
+        thirty_days_ago = now - timedelta(days=30)
         context['completed_assignments'] = Assignment.objects.filter(
             interpreter=interpreter,
             status='COMPLETED',
@@ -1502,14 +1503,43 @@ class AssignmentListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         
         return context
 
-class AssignmentDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
-    model = Assignment
-    template_name = 'trad/assignment_detail.html'
-    context_object_name = 'assignment'
 
+
+
+
+
+class AssignmentDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        assignment = self.get_object()
-        return self.request.user.interpreter_profile == assignment.interpreter
+        return self.request.user.role == 'INTERPRETER'
+
+    def get(self, request, pk):
+        assignment = get_object_or_404(Assignment, pk=pk)
+        
+        if assignment.interpreter != request.user.interpreter_profile:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+        data = {
+            'id': assignment.id,
+            'start_time': assignment.start_time.isoformat(),
+            'end_time': assignment.end_time.isoformat(),
+            'location': assignment.location,
+            'city': assignment.city,
+            'state': assignment.state,
+            'zip_code': assignment.zip_code,
+            'service_type': assignment.service_type.name,
+            'source_language': assignment.source_language.name,
+            'target_language': assignment.target_language.name,
+            'interpreter_rate': str(assignment.interpreter_rate),
+            'minimum_hours': assignment.minimum_hours,
+            'status': assignment.status,
+            'special_requirements': assignment.special_requirements or '',
+            'notes': assignment.notes or '',
+            'can_start': assignment.can_be_started(),
+            'can_complete': assignment.can_be_completed(),
+            'can_cancel': assignment.can_be_cancelled()
+        }
+        
+        return JsonResponse(data)
 
 @require_POST
 def accept_assignment(request, pk):
@@ -1518,21 +1548,26 @@ def accept_assignment(request, pk):
     if assignment.interpreter != request.user.interpreter_profile:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
         
-    if assignment.status != 'PENDING':
+    if not assignment.can_be_confirmed():
         return JsonResponse({'error': 'Invalid status'}, status=400)
-        
-    assignment.status = 'CONFIRMED'
-    assignment.save()
-    
-    # Créer une notification pour le client
-    Notification.objects.create(
-        recipient=assignment.client.user,
-        type='ASSIGNMENT_ACCEPTED',
-        title='Interpreter accepted your assignment',
-        content=f'Your interpreter has confirmed the assignment for {assignment.start_time.strftime("%B %d, %Y at %I:%M %p")}'
-    )
-    
-    return JsonResponse({'status': 'success'})
+
+    # Vérifier les conflits d'horaire
+    conflicting_assignments = Assignment.objects.filter(
+        interpreter=request.user.interpreter_profile,
+        status__in=['CONFIRMED', 'IN_PROGRESS'],
+        start_time__lt=assignment.end_time,
+        end_time__gt=assignment.start_time
+    ).exists()
+
+    if conflicting_assignments:
+        return JsonResponse({
+            'error': 'Schedule conflict',
+            'message': 'You already have an assignment during this time period'
+        }, status=400)
+
+    if assignment.confirm():
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'error': 'Could not confirm assignment'}, status=400)
 
 @require_POST
 def reject_assignment(request, pk):
@@ -1541,21 +1576,34 @@ def reject_assignment(request, pk):
     if assignment.interpreter != request.user.interpreter_profile:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
         
-    if assignment.status != 'PENDING':
+    if not assignment.can_be_cancelled():
         return JsonResponse({'error': 'Invalid status'}, status=400)
         
-    assignment.status = 'CANCELLED'
-    assignment.save()
+    old_interpreter = assignment.cancel()
+    if old_interpreter:
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'error': 'Could not reject assignment'}, status=400)
+
+@require_POST
+def start_assignment(request, pk):
+    assignment = get_object_or_404(Assignment, pk=pk)
     
-    # Notification pour le client
-    Notification.objects.create(
-        recipient=assignment.client.user,
-        type='ASSIGNMENT_REJECTED',
-        title='Interpreter declined your assignment',
-        content=f'Unfortunately, the interpreter is not available for your assignment on {assignment.start_time.strftime("%B %d, %Y")}'
-    )
-    
-    return JsonResponse({'status': 'success'})
+    if assignment.interpreter != request.user.interpreter_profile:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    if not assignment.can_be_started():
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    # Vérifier la fenêtre de temps (15 minutes avant)
+    if timezone.now() + timedelta(minutes=15) < assignment.start_time:
+        return JsonResponse({
+            'error': 'Too early',
+            'message': 'You can only start the assignment 15 minutes before the scheduled time'
+        }, status=400)
+
+    if assignment.start():
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'error': 'Could not start assignment'}, status=400)
 
 @require_POST
 def complete_assignment(request, pk):
@@ -1564,34 +1612,48 @@ def complete_assignment(request, pk):
     if assignment.interpreter != request.user.interpreter_profile:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
         
-    if assignment.status != 'IN_PROGRESS':
+    if not assignment.can_be_completed():
         return JsonResponse({'error': 'Invalid status'}, status=400)
         
-    assignment.status = 'COMPLETED'
-    assignment.completed_at = timezone.now()
-    assignment.save()
+    if assignment.complete():
+        return JsonResponse({
+            'status': 'success',
+            'payment': str(assignment.total_interpreter_payment)
+        })
+    return JsonResponse({'error': 'Could not complete assignment'}, status=400)
+
+def get_assignment_counts(request):
+    if not request.user.is_authenticated or request.user.role != 'INTERPRETER':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
     
-    # Calculer le paiement de l'interprète
-    duration = assignment.end_time - assignment.start_time
-    hours = duration.total_seconds() / 3600
-    total_payment = max(
-        assignment.minimum_hours * float(assignment.interpreter_rate),
-        hours * float(assignment.interpreter_rate)
-    )
-    assignment.total_interpreter_payment = total_payment
-    assignment.save()
+    interpreter = request.user.interpreter_profile
     
-    # Créer un paiement
-    Payment.objects.create(
-        assignment=assignment,
-        amount=total_payment,
-        payment_type='INTERPRETER_PAYMENT',
-        status='PENDING'
-    )
+    counts = {
+        'pending': Assignment.objects.filter(interpreter=interpreter, status='PENDING').count(),
+        'upcoming': Assignment.objects.filter(interpreter=interpreter, status='CONFIRMED').count(),
+        'in_progress': Assignment.objects.filter(interpreter=interpreter, status='IN_PROGRESS').count(),
+        'completed': Assignment.objects.filter(interpreter=interpreter, status='COMPLETED').count()
+    }
     
+    return JsonResponse(counts)
+
+@require_POST
+def mark_assignments_as_read(request):
+    interpreter = request.user.interpreter_profile
+    AssignmentNotification.objects.filter(
+        interpreter=interpreter,
+        is_read=False
+    ).update(is_read=True)
     return JsonResponse({'status': 'success'})
 
-
+def get_unread_assignments_count(request):
+    if not request.user.is_authenticated or request.user.role != 'INTERPRETER':
+        return JsonResponse({'count': 0})
+        
+    count = AssignmentNotification.get_unread_count(
+        request.user.interpreter_profile
+    )
+    return JsonResponse({'count': count})
 # views.py
 
 

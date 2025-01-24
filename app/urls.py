@@ -1,4 +1,3 @@
-# urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
@@ -50,7 +49,6 @@ urlpatterns = [
          name='password_reset_complete'),
     
     # User Profiles
-    #path('profile/edit/', views.ClientProfileUpdateView.as_view(), name='profile_edit'),
     path('profile/notifications/', views.NotificationPreferencesView.as_view(), name='notification_preferences'),
     
     # Dashboards
@@ -66,83 +64,73 @@ urlpatterns = [
     
     # Assignment Management (Client)
     path('client/assignments/<int:pk>/', views.AssignmentDetailClientView.as_view(), name='client_assignment_detail'),
-    
     path('clienprofile/', views.ProfileView.as_view(), name='client_profile_edit'),
     path('client_profile/password/', views.ProfilePasswordChangeView.as_view(), name='client_change_password'),
     
-    #interpreter
-        path(
-        'interpreter/register/', 
-        views.InterpreterRegistrationStep1View.as_view(), 
-        name='interpreter_registration_step1'
-    ),
-    path(
-        'interpreter/register/step2/', 
-        views.InterpreterRegistrationStep2View.as_view(), 
-        name='interpreter_registration_step2'
-    ),
-    path(
-        'interpreter/register/step3/', 
-        views.InterpreterRegistrationStep3View.as_view(), 
-        name='interpreter_registration_step3'
-    ),
-  path('interpreter/settings/', 
-    views.InterpreterSettingsView.as_view(), 
-    name='interpreter_settings'),
+    # Interpreter Registration
+    path('interpreter/register/', 
+         views.InterpreterRegistrationStep1View.as_view(), 
+         name='interpreter_registration_step1'),
+    path('interpreter/register/step2/', 
+         views.InterpreterRegistrationStep2View.as_view(), 
+         name='interpreter_registration_step2'),
+    path('interpreter/register/step3/', 
+         views.InterpreterRegistrationStep3View.as_view(), 
+         name='interpreter_registration_step3'),
     
-    path(
-        'interpreter/schedule/',
-        views.InterpreterScheduleView.as_view(),
-        name='interpreter_schedule'
-    ),
-    path(
-        'interpreter/schedule/assignments/',
-        views.get_calendar_assignments,
-        name='get_calendar_assignments'
-    ),
-        path(
-        'interpreter/assignments/',
-        views.AssignmentListView.as_view(),
-        name='interpreter_assignments'
-    ),
-    path(
-        'interpreter/assignments/<int:pk>/',
-        views.AssignmentDetailView.as_view(),
-        name='assignment_detail'
-    ),
-    path(
-        'interpreter/assignments/<int:pk>/accept/',
-        views.accept_assignment,
-        name='accept_assignment'
-    ),
-    path(
-        'interpreter/assignments/<int:pk>/reject/',
-        views.reject_assignment,
-        name='reject_assignment'
-    ),
-    path(
-        'interpreter/assignments/<int:pk>/complete/',
-        views.complete_assignment,
-        name='complete_assignment'
-    ),
-        path(
-        'interpreter/earnings/',
-        views.TranslatorEarningsView.as_view(),
-        name='translator_earnings'
-    ),
-    path(
-        'interpreter/earnings/data/',
-        views.get_earnings_data,
-        name='earnings_data'
-    ),
-    path(
-        'interpreter/earnings/data/<int:year>/',
-        views.get_earnings_data,
-        name='earnings_data_year'
-    ),
+    # Interpreter Settings & Schedule
+    path('interpreter/settings/', 
+         views.InterpreterSettingsView.as_view(), 
+         name='interpreter_settings'),
+    path('interpreter/schedule/',
+         views.InterpreterScheduleView.as_view(),
+         name='interpreter_schedule'),
+    path('interpreter/schedule/assignments/',
+         views.get_calendar_assignments,
+         name='get_calendar_assignments'),
+    
+    # Assignment Management (Interpreter)
+    path('interpreter/assignments/',
+         views.AssignmentListView.as_view(),
+         name='interpreter_assignments'),
+    path('interpreter/assignments/<int:pk>/details/',
+         views.AssignmentDetailView.as_view(),
+         name='assignment_detail'),
+    path('interpreter/assignments/<int:pk>/accept/',
+         views.accept_assignment,
+         name='accept_assignment'),
+    path('interpreter/assignments/<int:pk>/reject/',
+         views.reject_assignment,
+         name='reject_assignment'),
+    path('interpreter/assignments/<int:pk>/start/',
+         views.start_assignment,
+         name='start_assignment'),
+    path('interpreter/assignments/<int:pk>/complete/',
+         views.complete_assignment,
+         name='complete_assignment'),
+    
+    # Interpreter Earnings
+    path('interpreter/earnings/',
+         views.TranslatorEarningsView.as_view(),
+         name='translator_earnings'),
+    path('interpreter/earnings/data/',
+         views.get_earnings_data,
+         name='earnings_data'),
+    path('interpreter/earnings/data/<int:year>/',
+         views.get_earnings_data,
+         name='earnings_data_year'),
 
-    # API endpoints
-    path('api/notifications/mark-read/', views.MarkNotificationReadView.as_view(), name='mark_notification_read'),
-    path('api/notifications/clear-all/', views.ClearAllNotificationsView.as_view(), name='clear_all_notifications'),
-    
+    # Notifications
+    path('api/notifications/mark-read/',
+         views.MarkNotificationReadView.as_view(),
+         name='mark_notification_read'),
+    path('api/notifications/clear-all/',
+         views.ClearAllNotificationsView.as_view(),
+         name='clear_all_notifications'),
+    path('interpreter/assignments/notifications/count/',
+         views.get_unread_assignments_count,
+         name='unread_assignments_count'),
+    path('interpreter/assignments/notifications/mark-read/',
+         views.mark_assignments_as_read,
+         name='mark_assignments_read'),
 ]

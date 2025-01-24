@@ -8,6 +8,7 @@
     <title>{% block title %}Dashboard{% endblock %} - InterpreterPro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/notif.css' %}">
     <style>
         /* Base styles (keeping the same glassmorphism theme) */
         :root {
@@ -207,6 +208,36 @@
                 max-width: 1024px;
             }
         }
+
+            .notification-icon-wrapper {
+        position: relative;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #FF4B4B;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-3px); }
+        75% { transform: translateX(3px); }
+    }
+
+    .shake {
+        animation: shake 0.5s ease-in-out infinite;
+    }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -271,13 +302,17 @@
             <i class="fas fa-calendar-alt"></i>
             <span>Schedule</span>
         </a>
-        <a href="{% url 'dbdint:interpreter_assignments' %}" class="nav-item {% if request.resolver_match.url_name == 'interpreter_assignments' %}active{% endif %}">
-            <i class="fas fa-language"></i>
+        <a href="{% url 'dbdint:interpreter_assignments' %}" class="nav-item {% if request.resolver_match.url_name == 'interpreter_assignments' %}active{% endif %} position-relative">
+            <div class="notification-icon-wrapper">
+                <i class="fas fa-language"></i>
+                <span class="notification-badge" id="assignment-badge" style="display: none;"></span>
+            </div>
             <span>Appointment</span>
         </a>
   
     </nav>
-
+    
+    <script src="{% static 'js/notif.js' %}"></script>
     <script>
         // Profile dropdown toggle
         const profileButton = document.getElementById('profileButton');
