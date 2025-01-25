@@ -1000,92 +1000,162 @@ class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 #####INTERPRETERDASHBOARD##################################
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep1View(FormView):
-    template_name = 'trad/auth/step1.html'
-    form_class = InterpreterRegistrationForm1
-    success_url = reverse_lazy('dbdint:interpreter_registration_step2')
+   template_name = 'trad/auth/step1.html'
+   form_class = InterpreterRegistrationForm1
+   success_url = reverse_lazy('dbdint:interpreter_registration_step2')
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('interpreter_dashboard')
-        return super().dispatch(request, *args, **kwargs)
+   def dispatch(self, request, *args, **kwargs):
+       logger.info(f"Dispatch called for InterpreterRegistrationStep1View - User authenticated: {request.user.is_authenticated}")
+       
+       if request.user.is_authenticated:
+           logger.info(f"Authenticated user {request.user.email} attempting to access registration. Redirecting to dashboard.")
+           return redirect('interpreter_dashboard')
+       return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        self.request.session['dbdint:interpreter_registration_step1'] = {
-            'email': form.cleaned_data['email'],
-            'password': form.cleaned_data['password1'],
-            'first_name': form.cleaned_data['first_name'],
-            'last_name': form.cleaned_data['last_name'],
-            'phone': form.cleaned_data['phone']
-        }
-        return super().form_valid(form)
+   def form_valid(self, form):
+       logger.info("Form validation successful for InterpreterRegistrationStep1View")
+       
+       try:
+           session_data = {
+               'username': form.cleaned_data['username'],
+               'email': form.cleaned_data['email'],
+               'password': form.cleaned_data['password1'],
+               'first_name': form.cleaned_data['first_name'],
+               'last_name': form.cleaned_data['last_name'],
+               'phone': form.cleaned_data['phone']
+           }
+           self.request.session['dbdint:interpreter_registration_step1'] = session_data
+           logger.info(f"Session data saved successfully for username: {session_data['username']}, email: {session_data['email']}")
+           
+       except Exception as e:
+           logger.error(f"Error saving session data: {str(e)}")
+           messages.error(self.request, 'An error occurred while saving your information.')
+           return self.form_invalid(form)
+       
+       logger.info(f"Redirecting to step 2 for username: {session_data['username']}")
+       return super().form_valid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
+   def form_invalid(self, form):
+       logger.warning("Form validation failed for InterpreterRegistrationStep1View")
+       logger.debug(f"Form errors: {form.errors}")
+       
+       messages.error(self.request, 'Please correct the errors below.')
+       return super().form_invalid(form)
+
+   def get(self, request, *args, **kwargs):
+       logger.info("GET request received for InterpreterRegistrationStep1View")
+       return super().get(request, *args, **kwargs)
+
+   def post(self, request, *args, **kwargs):
+       logger.info("POST request received for InterpreterRegistrationStep1View")
+       logger.debug(f"POST data: {request.POST}")
+       return super().post(request, *args, **kwargs)
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep2View(FormView):
-    template_name = 'trad/auth/step2.html'
-    form_class = InterpreterRegistrationForm2
-    success_url = reverse_lazy('dbdint:interpreter_registration_step3')
+   template_name = 'trad/auth/step2.html'
+   form_class = InterpreterRegistrationForm2
+   success_url = reverse_lazy('dbdint:interpreter_registration_step3')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['languages'] = Language.objects.filter(is_active=True)
-        
-        # Récupérer les langues précédemment sélectionnées si elles existent
-        step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
-        if step2_data and 'languages' in step2_data:
-            context['selected_languages'] = step2_data['languages']
-            
-        return context
+   def get_context_data(self, **kwargs):
+       logger.info("Getting context data for InterpreterRegistrationStep2View")
+       context = super().get_context_data(**kwargs)
+       
+       try:
+           context['languages'] = Language.objects.filter(is_active=True)
+           logger.debug(f"Found {context['languages'].count()} active languages")
+           
+           step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
+           if step2_data and 'languages' in step2_data:
+               context['selected_languages'] = step2_data['languages']
+               logger.debug(f"Retrieved previously selected languages: {step2_data['languages']}")
+       except Exception as e:
+           logger.error(f"Error getting context data: {str(e)}")
+           
+       return context
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('dbdint:interpreter_registration_step1'):
-            messages.error(request, 'Please complete step 1 first.')
-            return redirect('dbdint:interpreter_registration_step1')
-        return super().dispatch(request, *args, **kwargs)
+   def dispatch(self, request, *args, **kwargs):
+       logger.info("Dispatch called for InterpreterRegistrationStep2View")
+       
+       if not request.session.get('dbdint:interpreter_registration_step1'):
+           logger.warning("Step 1 data not found in session. Redirecting to step 1.")
+           messages.error(request, 'Please complete step 1 first.')
+           return redirect('dbdint:interpreter_registration_step1')
+           
+       logger.debug("Step 1 data found in session. Proceeding with step 2.")
+       return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        # Mettre à jour la session avec les données du formulaire
-        self.request.session['dbdint:interpreter_registration_step2'] = {
-            'languages': [str(lang.id) for lang in form.cleaned_data['languages']],
-            'certifications': form.cleaned_data['certifications'],
-            'specialties': form.cleaned_data['specialties'],
-            'hourly_rate': "0"  # Valeur par défaut pour hourly_rate
-        }
-        return super().form_valid(form)
+   def form_valid(self, form):
+       logger.info("Form validation successful for InterpreterRegistrationStep2View")
+       
+       try:
+           selected_languages = [str(lang.id) for lang in form.cleaned_data['languages']]
+           logger.debug(f"Selected languages: {selected_languages}")
+           
+           self.request.session['dbdint:interpreter_registration_step2'] = {
+               'languages': selected_languages
+           }
+           logger.info("Session data saved successfully")
+           
+       except Exception as e:
+           logger.error(f"Error saving session data: {str(e)}")
+           messages.error(self.request, 'An error occurred while saving your information.')
+           return self.form_invalid(form)
+           
+       return super().form_valid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
+   def form_invalid(self, form):
+       logger.warning("Form validation failed for InterpreterRegistrationStep2View")
+       logger.debug(f"Form errors: {form.errors}")
+       messages.error(self.request, 'Please correct the errors below.')
+       return super().form_invalid(form)
 
-    def get_initial(self):
-        """Pré-remplir le formulaire avec les données de session si elles existent"""
-        initial = super().get_initial()
-        step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
-        
-        if step2_data:
-            # Convertir les IDs de langue de string à int
-            if 'languages' in step2_data:
-                initial['languages'] = [int(lang_id) for lang_id in step2_data['languages']]
-            initial['certifications'] = step2_data.get('certifications', '')
-            initial['specialties'] = step2_data.get('specialties', '')
-            
-        return initial
+   def get_initial(self):
+       logger.info("Getting initial data for InterpreterRegistrationStep2View")
+       initial = super().get_initial()
+       
+       try:
+           step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
+           if step2_data and 'languages' in step2_data:
+               initial['languages'] = [int(lang_id) for lang_id in step2_data['languages']]
+               logger.debug(f"Retrieved initial languages data: {initial['languages']}")
+       except Exception as e:
+           logger.error(f"Error getting initial data: {str(e)}")
+           
+       return initial
+
+   def get(self, request, *args, **kwargs):
+       logger.info("GET request received for InterpreterRegistrationStep2View")
+       return super().get(request, *args, **kwargs)
+
+   def post(self, request, *args, **kwargs):
+       logger.info("POST request received for InterpreterRegistrationStep2View")
+       logger.debug(f"POST data: {request.POST}")
+       return super().post(request, *args, **kwargs)
+
+
+
+
+
+
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep3View(FormView):
-    template_name = 'trad/auth/step3.html'
-    form_class = InterpreterRegistrationForm3
-    success_url = reverse_lazy('dbdint:interpreter_dashboard')
+   template_name = 'trad/auth/step3.html'
+   form_class = InterpreterRegistrationForm3 
+   success_url = reverse_lazy('dbdint:interpreter_dashboard')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['current_step'] = 3
-        context['states'] = {
+   def get_context_data(self, **kwargs):
+       logger.info("Getting context data for InterpreterRegistrationStep3View")
+       context = super().get_context_data(**kwargs)
+       context['current_step'] = 3
+       context['states'] = {
             'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
             'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
             'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
@@ -1100,64 +1170,60 @@ class InterpreterRegistrationStep3View(FormView):
             'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
             'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia'
         }
-        return context
+       logger.debug(f"Context data prepared with {len(context['states'])} states")
+       return context
 
-    def dispatch(self, request, *args, **kwargs):
-        if not all([
-            request.session.get('dbdint:interpreter_registration_step1'),
-            request.session.get('dbdint:interpreter_registration_step2')
-        ]):
-            messages.error(request, 'Please complete previous steps first.')
-            return redirect('dbdint:interpreter_registration_step1')
-        return super().dispatch(request, *args, **kwargs)
+   def dispatch(self, request, *args, **kwargs):
+       logger.info("Dispatch called for InterpreterRegistrationStep3View")
+       step1_exists = 'dbdint:interpreter_registration_step1' in request.session
+       step2_exists = 'dbdint:interpreter_registration_step2' in request.session
+       
+       if not all([step1_exists, step2_exists]):
+           logger.warning("Previous steps data missing")
+           messages.error(request, 'Please complete previous steps first.')
+           return redirect('dbdint:interpreter_registration_step1')
+       return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        try:
-            # Récupérer les données des étapes précédentes
-            step1_data = self.request.session['dbdint:interpreter_registration_step1']
-            step2_data = self.request.session['dbdint:interpreter_registration_step2']
+   def form_valid(self, form):
+       logger.info("Form validation successful")
+       try:
+           step1_data = self.request.session['dbdint:interpreter_registration_step1']
+           step2_data = self.request.session['dbdint:interpreter_registration_step2']
+           
+           user = User.objects.create_user(
+               username=step1_data['username'],
+               email=step1_data['email'],
+               password=step1_data['password'],
+               first_name=step1_data['first_name'],
+               last_name=step1_data['last_name'],
+               phone=step1_data['phone'],
+               role='INTERPRETER'
+           )
+           logger.info(f"User created: {user.email}")
 
-            # Créer l'utilisateur
-            user = User.objects.create_user(
-                email=step1_data['email'],
-                password=step1_data['password'],
-                first_name=step1_data['first_name'],
-                last_name=step1_data['last_name'],
-                phone=step1_data['phone'],
-                role='INTERPRETER'
-            )
+           interpreter = form.save(commit=False)
+           interpreter.user = user
+           interpreter.save()
+           
+           for language_id in step2_data['languages']:
+               interpreter.languages.add(language_id)
+           
+           del self.request.session['dbdint:interpreter_registration_step1']
+           del self.request.session['dbdint:interpreter_registration_step2']
 
-            # Créer le profil d'interprète
-            interpreter = form.save(commit=False)
-            interpreter.user = user
-            interpreter.certifications = step2_data['certifications']
-            interpreter.specialties = step2_data['specialties']
-            interpreter.hourly_rate = step2_data.get('hourly_rate', '0')  # Utiliser get avec valeur par défaut
-            interpreter.save()
+           login(self.request, user)
+           messages.success(self.request, 'Your interpreter account has been created successfully! Our team will review your application.')
+           return super().form_valid(form)
 
-            # Ajouter les langues
-            for language_id in step2_data['languages']:
-                interpreter.languages.add(language_id)
+       except Exception as e:
+           logger.error(f"Registration error: {str(e)}", exc_info=True)
+           messages.error(self.request, 'An error occurred while creating your account.')
+           return redirect('dbdint:interpreter_registration_step1')
 
-            # Nettoyer la session
-            del self.request.session['dbdint:interpreter_registration_step1']
-            del self.request.session['dbdint:interpreter_registration_step2']
-
-            # Connecter l'utilisateur
-            login(self.request, user)
-            messages.success(
-                self.request, 
-                'Your interpreter account has been created successfully! Our team will review your application.'
-            )
-            return super().form_valid(form)
-
-        except Exception as e:
-            messages.error(self.request, 'An error occurred while creating your account. Please try again.')
-            return redirect('dbdint:interpreter_registration_step1')
-
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
+   def form_invalid(self, form):
+       logger.warning(f"Form validation failed: {form.errors}")
+       messages.error(self.request, 'Please correct the errors below.')
+       return super().form_invalid(form)
 
 
 class InterpreterDashboardView(LoginRequiredMixin, UserPassesTestMixin,TemplateView):

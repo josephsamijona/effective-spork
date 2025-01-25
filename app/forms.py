@@ -623,59 +623,68 @@ class CustomPasswordChangeForm(PasswordChangeForm):
 ################################interpreter
 
 class InterpreterRegistrationForm1(forms.ModelForm):
-    """Formulaire étape 1: Informations de base"""
-    email = forms.EmailField(widget=forms.EmailInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Enter your email'
-    }))
-    password1 = forms.CharField(
-        label='Password',
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter your password'
-        })
-    )
-    password2 = forms.CharField(
-        label='Confirm Password',
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Confirm your password'
-        })
-    )
+   """Formulaire étape 1: Informations de base"""
+   username = forms.CharField(widget=forms.TextInput(attrs={
+       'class': 'form-control',
+       'placeholder': 'Enter your username'
+   }))
+   email = forms.EmailField(widget=forms.EmailInput(attrs={
+       'class': 'form-control', 
+       'placeholder': 'Enter your email'
+   }))
+   password1 = forms.CharField(
+       label='Password',
+       widget=forms.PasswordInput(attrs={
+           'class': 'form-control',
+           'placeholder': 'Enter your password'
+       })
+   )
+   password2 = forms.CharField(
+       label='Confirm Password',
+       widget=forms.PasswordInput(attrs={
+           'class': 'form-control',
+           'placeholder': 'Confirm your password'
+       })
+   )
 
-    class Meta:
-        model = User
-        fields = ['email', 'first_name', 'last_name', 'phone']
-        widgets = {
-            'first_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter your first name'
-            }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter your last name'
-            }),
-            'phone': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter your phone number'
-            })
-        }
+   class Meta:
+       model = User
+       fields = ['username', 'email', 'first_name', 'last_name', 'phone']
+       widgets = {
+           'first_name': forms.TextInput(attrs={
+               'class': 'form-control',
+               'placeholder': 'Enter your first name'
+           }),
+           'last_name': forms.TextInput(attrs={
+               'class': 'form-control',
+               'placeholder': 'Enter your last name'
+           }),
+           'phone': forms.TextInput(attrs={
+               'class': 'form-control',
+               'placeholder': 'Enter your phone number'
+           })
+       }
 
-    def clean_password2(self):
-        password1 = self.cleaned_data.get('password1')
-        password2 = self.cleaned_data.get('password2')
-        if password1 and password2:
-            if password1 != password2:
-                raise ValidationError("Passwords don't match")
-            validate_password(password1)
-        return password2
+   def clean_password2(self):
+       password1 = self.cleaned_data.get('password1')
+       password2 = self.cleaned_data.get('password2')
+       if password1 and password2:
+           if password1 != password2:
+               raise ValidationError("Passwords don't match")
+           validate_password(password1)
+       return password2
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise ValidationError("This email is already registered")
-        return email
+   def clean_email(self):
+       email = self.cleaned_data.get('email')
+       if User.objects.filter(email=email).exists():
+           raise ValidationError("This email is already registered")
+       return email
 
+   def clean_username(self):
+       username = self.cleaned_data.get('username')
+       if User.objects.filter(username=username).exists():
+           raise ValidationError("This username is already taken")
+       return username
 class InterpreterRegistrationForm2(forms.ModelForm):
     """Formulaire étape 2: Qualifications professionnelles"""
     languages = forms.ModelMultipleChoiceField(
@@ -687,42 +696,9 @@ class InterpreterRegistrationForm2(forms.ModelForm):
         help_text="Select all languages you can interpret"
     )
 
-    certifications = forms.JSONField(
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Example: [{"name": "CCHI", "expiry_date": "2025-01-01"}]'
-        })
-    )
-
-    specialties = forms.JSONField(
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Example: ["Medical", "Legal"]'
-        })
-    )
-
-    hourly_rate = forms.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Your hourly rate in USD'
-        })
-    )
-
     class Meta:
         model = Interpreter
-        fields = ['languages', 'certifications', 'specialties', 'hourly_rate']
-
-    def clean_hourly_rate(self):
-        rate = self.cleaned_data.get('hourly_rate')
-        if rate and rate < 0:
-            raise ValidationError("Hourly rate cannot be negative")
-        return rate
+        fields = ['languages']
 
 class InterpreterRegistrationForm3(forms.ModelForm):
     """Formulaire étape 3: Adresse et documents"""

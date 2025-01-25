@@ -47,22 +47,6 @@
             font-size: 0.9rem;
             flex: 1;
         }
-
-        /* Animation de succès */
-        @keyframes successPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .success-message {
-            background: rgba(40, 167, 69, 0.2);
-            border: 1px solid #28a745;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            animation: successPulse 2s ease-in-out;
-        }
     </style>
 </head>
 <body>
@@ -75,18 +59,18 @@
             </div>
             <div class="step complete">
                 2
-                <span class="step-label">Qualifications</span>
+                <span class="step-label">Languages</span>
             </div>
             <div class="step active">
                 3
-                <span class="step-label">Documents</span>
+                <span class="step-label">Location</span>
             </div>
         </div>
 
         <!-- Form Section -->
         <div class="form-section">
-            <h1 class="form-title">Address & Documentation</h1>
-            <p class="form-subtitle">Final step - Let's get your location and documentation details</p>
+            <h1 class="form-title">Location & Agreement</h1>
+            <p class="form-subtitle">Final step - Complete your address information</p>
 
             <!-- Display Messages -->
             {% if messages %}
@@ -192,13 +176,13 @@
                 });
 
                 input.addEventListener('blur', function() {
-                    if (!this.value) {
+                    if (!this.value && input.type !== 'checkbox') {
                         this.parentElement.classList.remove('focused');
                     }
                 });
             });
 
-            // Validation du formulaire avant soumission
+            // Validation du formulaire
             form.addEventListener('submit', function(e) {
                 const requiredFields = form.querySelectorAll('[required]');
                 let isValid = true;

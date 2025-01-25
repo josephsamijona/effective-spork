@@ -26,29 +26,10 @@
             color: white;
         }
 
-        /* Style pour les champs JSON */
-        .json-field-info {
+        .selection-info {
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
             margin-top: 0.25rem;
-        }
-
-        /* Styles pour le taux horaire */
-        .rate-field {
-            position: relative;
-        }
-
-        .rate-field::before {
-            content: '$';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .rate-field input {
-            padding-left: 2rem;
         }
     </style>
 </head>
@@ -62,7 +43,7 @@
             </div>
             <div class="step active">
                 2
-                <span class="step-label">Qualifications</span>
+                <span class="step-label">Languages</span>
             </div>
             <div class="step">
                 3
@@ -72,8 +53,8 @@
 
         <!-- Form Section -->
         <div class="form-section">
-            <h1 class="form-title">Professional Qualifications</h1>
-            <p class="form-subtitle">Tell us about your interpretation skills and experience</p>
+            <h1 class="form-title">Select Your Languages</h1>
+            <p class="form-subtitle">Choose all the languages you can interpret</p>
 
             <!-- Display Messages -->
             {% if messages %}
@@ -94,46 +75,11 @@
                 <div class="form-group">
                     <label for="{{ form.languages.id_for_label }}">Languages</label>
                     {{ form.languages }}
-                    <div class="json-field-info">
+                    <div class="selection-info">
                         Hold Ctrl/Cmd to select multiple languages
                     </div>
                     {% if form.languages.errors %}
                     <div class="error-message">{{ form.languages.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <!-- Certifications -->
-                <div class="form-group">
-                    <label for="{{ form.certifications.id_for_label }}">Certifications</label>
-                    {{ form.certifications }}
-                    <div class="json-field-info">
-                        Format: [{"name": "CCHI", "expiry_date": "2025-01-01"}]
-                    </div>
-                    {% if form.certifications.errors %}
-                    <div class="error-message">{{ form.certifications.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <!-- Specialties -->
-                <div class="form-group">
-                    <label for="{{ form.specialties.id_for_label }}">Specialties</label>
-                    {{ form.specialties }}
-                    <div class="json-field-info">
-                        Format: ["Medical", "Legal"]
-                    </div>
-                    {% if form.specialties.errors %}
-                    <div class="error-message">{{ form.specialties.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <!-- Hourly Rate -->
-                <div class="form-group">
-                    <label for="{{ form.hourly_rate.id_for_label }}">Hourly Rate (USD)</label>
-                    <div class="rate-field">
-                        {{ form.hourly_rate }}
-                    </div>
-                    {% if form.hourly_rate.errors %}
-                    <div class="error-message">{{ form.hourly_rate.errors.0 }}</div>
                     {% endif %}
                 </div>
 
@@ -154,7 +100,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Gestion du focus des champs
             const form = document.querySelector('form');
-            const inputs = form.querySelectorAll('input, textarea, select');
+            const inputs = form.querySelectorAll('select');
 
             inputs.forEach(input => {
                 input.addEventListener('focus', function() {
@@ -162,31 +108,10 @@
                 });
 
                 input.addEventListener('blur', function() {
-                    if (!this.value) {
+                    if (!this.selectedOptions.length) {
                         this.parentElement.classList.remove('focused');
                     }
                 });
-            });
-
-            // Validation JSON
-            const jsonFields = document.querySelectorAll('textarea[name="certifications"], textarea[name="specialties"]');
-            jsonFields.forEach(field => {
-                field.addEventListener('blur', function() {
-                    try {
-                        if (this.value) {
-                            JSON.parse(this.value);
-                            this.classList.remove('error');
-                        }
-                    } catch (e) {
-                        this.classList.add('error');
-                    }
-                });
-            });
-
-            // Validation du taux horaire
-            const rateField = document.querySelector('input[name="hourly_rate"]');
-            rateField.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9.]/g, '');
             });
         });
     </script>
