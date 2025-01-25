@@ -1082,6 +1082,26 @@ class InterpreterRegistrationStep3View(FormView):
     form_class = InterpreterRegistrationForm3
     success_url = reverse_lazy('dbdint:interpreter_dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_step'] = 3
+        context['states'] = {
+            'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+            'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+            'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+            'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+            'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+            'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+            'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+            'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+            'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+            'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+            'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+            'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+            'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia'
+        }
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         if not all([
             request.session.get('dbdint:interpreter_registration_step1'),
@@ -1112,7 +1132,7 @@ class InterpreterRegistrationStep3View(FormView):
             interpreter.user = user
             interpreter.certifications = step2_data['certifications']
             interpreter.specialties = step2_data['specialties']
-            interpreter.hourly_rate = step2_data['hourly_rate']
+            interpreter.hourly_rate = step2_data.get('hourly_rate', '0')  # Utiliser get avec valeur par défaut
             interpreter.save()
 
             # Ajouter les langues
