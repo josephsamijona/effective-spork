@@ -24,7 +24,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView
-from .models import NotificationPreference, Interpreter
+from .models import NotificationPreference, Interpreter,Language
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -1031,6 +1031,17 @@ class InterpreterRegistrationStep2View(FormView):
     form_class = InterpreterRegistrationForm2
     success_url = reverse_lazy('dbdint:interpreter_registration_step3')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['languages'] = Language.objects.filter(is_active=True)
+        
+        # Récupérer les langues précédemment sélectionnées si elles existent
+        step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
+        if step2_data and 'languages' in step2_data:
+            context['selected_languages'] = step2_data['languages']
+            
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         if not request.session.get('dbdint:interpreter_registration_step1'):
             messages.error(request, 'Please complete step 1 first.')
@@ -1038,17 +1049,32 @@ class InterpreterRegistrationStep2View(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Mettre à jour la session avec les données du formulaire
         self.request.session['dbdint:interpreter_registration_step2'] = {
             'languages': [str(lang.id) for lang in form.cleaned_data['languages']],
             'certifications': form.cleaned_data['certifications'],
             'specialties': form.cleaned_data['specialties'],
-            'hourly_rate': str(form.cleaned_data['hourly_rate'])
+            'hourly_rate': "0"  # Valeur par défaut pour hourly_rate
         }
         return super().form_valid(form)
 
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
+
+    def get_initial(self):
+        """Pré-remplir le formulaire avec les données de session si elles existent"""
+        initial = super().get_initial()
+        step2_data = self.request.session.get('dbdint:interpreter_registration_step2')
+        
+        if step2_data:
+            # Convertir les IDs de langue de string à int
+            if 'languages' in step2_data:
+                initial['languages'] = [int(lang_id) for lang_id in step2_data['languages']]
+            initial['certifications'] = step2_data.get('certifications', '')
+            initial['specialties'] = step2_data.get('specialties', '')
+            
+        return initial
 
 @method_decorator(never_cache, name='dispatch')
 class InterpreterRegistrationStep3View(FormView):
