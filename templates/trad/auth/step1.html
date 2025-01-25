@@ -1,259 +1,162 @@
-{% extends 'base_register.html' %}
-
-{% block title %}Step 1 - Basic Information{% endblock %}
-
-{% block form_content %}
-<div class="registration-step active">
-    <!-- Email Field -->
-    <div class="form-group">
-        <label for="email">Email</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-envelope"></i>
-            <input type="email" 
-                   id="email" 
-                   name="email" 
-                   class="form-control {% if form.email.errors %}error{% endif %}" 
-                   value="{{ form.email.value|default:'' }}"
-                   required
-                   placeholder="Enter your email address">
-        </div>
-        {% if form.email.errors %}
-        <div class="error-message">
-            {% for error in form.email.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- First Name Field -->
-    <div class="form-group">
-        <label for="first_name">First Name</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-user"></i>
-            <input type="text" 
-                   id="first_name" 
-                   name="first_name" 
-                   class="form-control {% if form.first_name.errors %}error{% endif %}"
-                   value="{{ form.first_name.value|default:'' }}"
-                   required
-                   placeholder="Enter your first name">
-        </div>
-        {% if form.first_name.errors %}
-        <div class="error-message">
-            {% for error in form.first_name.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Last Name Field -->
-    <div class="form-group">
-        <label for="last_name">Last Name</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-user"></i>
-            <input type="text" 
-                   id="last_name" 
-                   name="last_name" 
-                   class="form-control {% if form.last_name.errors %}error{% endif %}"
-                   value="{{ form.last_name.value|default:'' }}"
-                   required
-                   placeholder="Enter your last name">
-        </div>
-        {% if form.last_name.errors %}
-        <div class="error-message">
-            {% for error in form.last_name.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Password Field -->
-    <div class="form-group">
-        <label for="password1">Password</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-lock"></i>
-            <input type="password" 
-                   id="password1" 
-                   name="password1" 
-                   class="form-control {% if form.password1.errors %}error{% endif %}"
-                   required
-                   placeholder="Enter your password">
-            <i class="toggle-password fas fa-eye" onclick="togglePasswordVisibility('password1')"></i>
-        </div>
-        {% if form.password1.errors %}
-        <div class="error-message">
-            {% for error in form.password1.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <div class="password-requirements">
-            <small>Password must be at least 8 characters long and include:</small>
-            <ul>
-                <li class="requirement" id="length">At least 8 characters</li>
-                <li class="requirement" id="uppercase">One uppercase letter</li>
-                <li class="requirement" id="lowercase">One lowercase letter</li>
-                <li class="requirement" id="number">One number</li>
-                <li class="requirement" id="special">One special character</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Confirm Password Field -->
-    <div class="form-group">
-        <label for="password2">Confirm Password</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-lock"></i>
-            <input type="password" 
-                   id="password2" 
-                   name="password2" 
-                   class="form-control {% if form.password2.errors %}error{% endif %}"
-                   required
-                   placeholder="Confirm your password">
-            <i class="toggle-password fas fa-eye" onclick="togglePasswordVisibility('password2')"></i>
-        </div>
-        {% if form.password2.errors %}
-        <div class="error-message">
-            {% for error in form.password2.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Phone Number Field -->
-    <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-phone"></i>
-            <input type="tel" 
-                   id="phone" 
-                   name="phone" 
-                   class="form-control {% if form.phone.errors %}error{% endif %}"
-                   value="{{ form.phone.value|default:'' }}"
-                   required
-                   pattern="[0-9]{3}[0-9]{3}[0-9]{4}"
-                   placeholder="Enter your phone number (e.g., 1234567890)">
-        </div>
-        {% if form.phone.errors %}
-        <div class="error-message">
-            {% for error in form.phone.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Toggle password visibility
-    function togglePasswordVisibility(fieldId) {
-        const passwordField = document.getElementById(fieldId);
-        const toggleIcon = passwordField.nextElementSibling;
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpreter Registration - Step 1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/etape1.css' %}">
+    <style>
+        /* Intégration des styles inline en cas de problème de chargement du CSS */
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+        }
         
-        if (passwordField.type === 'password') {
-            passwordField.type = 'text';
-            toggleIcon.classList.remove('fa-eye');
-            toggleIcon.classList.add('fa-eye-slash');
-        } else {
-            passwordField.type = 'password';
-            toggleIcon.classList.remove('fa-eye-slash');
-            toggleIcon.classList.add('fa-eye');
+        .form-control:focus {
+            outline: none;
+            border-color: #0088FF;
+            background: rgba(255, 255, 255, 0.1);
         }
-    }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <!-- Progress Steps -->
+        <div class="steps-progress">
+            <div class="step active">
+                1
+                <span class="step-label">Basic Info</span>
+            </div>
+            <div class="step">
+                2
+                <span class="step-label">Qualifications</span>
+            </div>
+            <div class="step">
+                3
+                <span class="step-label">Documents</span>
+            </div>
+        </div>
 
-    // Password validation
-    const password = document.getElementById('password1');
-    const requirements = {
-        length: /.{8,}/,
-        uppercase: /[A-Z]/,
-        lowercase: /[a-z]/,
-        number: /[0-9]/,
-        special: /[^A-Za-z0-9]/
-    };
+        <!-- Form Section -->
+        <div class="form-section">
+            <h1 class="form-title">Create Your Interpreter Account</h1>
+            <p class="form-subtitle">Let's start with your basic information</p>
 
-    password.addEventListener('input', function() {
-        const value = this.value;
-        
-        for (const [requirement, regex] of Object.entries(requirements)) {
-            const element = document.getElementById(requirement);
-            if (regex.test(value)) {
-                element.classList.add('met');
-            } else {
-                element.classList.remove('met');
-            }
-        }
-    });
+            <!-- Display Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-    // Confirm password validation
-    const confirmPassword = document.getElementById('password2');
-    confirmPassword.addEventListener('input', function() {
-        if (this.value === password.value) {
-            this.setCustomValidity('');
-        } else {
-            this.setCustomValidity('Passwords do not match');
-        }
-    });
+            <!-- Registration Form -->
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12" y2="16"></line>
+                        </svg>
+                        {{ form.email.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
 
-    // Phone number formatting
-    const phoneInput = document.getElementById('phone');
-    phoneInput.addEventListener('input', function(e) {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length > 10) value = value.slice(0, 10);
-        this.value = value;
-    });
-</script>
-{% endblock %}
+                <!-- Name Fields Grid -->
+                <div class="form-grid">
+                    <!-- First Name -->
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="error-message">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-{% block extra_css %}
-<style>
-    .toggle-password {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: rgba(255, 255, 255, 0.5);
-        transition: color 0.3s ease;
-    }
+                    <!-- Last Name -->
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="error-message">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
 
-    .toggle-password:hover {
-        color: rgba(255, 255, 255, 0.8);
-    }
+                <!-- Phone Field -->
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                    <div class="error-message">{{ form.phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-    .password-requirements {
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.6);
-    }
+                <!-- Password Fields -->
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <div class="error-message">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-    .password-requirements ul {
-        list-style: none;
-        padding-left: 1rem;
-        margin-top: 0.25rem;
-    }
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <div class="error-message">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-    .requirement {
-        position: relative;
-        padding-left: 1.5rem;
-        margin: 0.25rem 0;
-    }
+                <!-- Buttons -->
+                <div class="button-group">
+                    <a href="{% url 'dbdint:choose_registration' %}" class="btn btn-previous">
+                        Back
+                    </a>
+                    <button type="submit" class="btn btn-next">
+                        Continue to Step 2
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    .requirement::before {
-        content: '×';
-        position: absolute;
-        left: 0;
-        color: rgba(255, 75, 75, 0.8);
-    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input');
 
-    .requirement.met::before {
-        content: '✓';
-        color: rgba(0, 200, 83, 0.8);
-    }
-</style>
-{% endblock %}
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.parentElement.classList.remove('focused');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

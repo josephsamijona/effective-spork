@@ -1,280 +1,226 @@
-{% extends 'base_register.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpreter Registration - Step 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/etape1.css' %}">
+    <style>
+        /* Styles spécifiques pour le formulaire d'adresse */
+        .state-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            appearance: none;
+            cursor: pointer;
+        }
 
-{% block title %}Step 3 - Address Information{% endblock %}
+        .state-select option {
+            background-color: #003366;
+            color: white;
+        }
 
-{% block extra_css %}
-<style>
-    .address-preview {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 1rem;
-        border-radius: 12px;
-        margin-top: 0.5rem;
-        display: none;
-    }
+        /* Style pour la checkbox W9 */
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
 
-    .address-preview.active {
-        display: block;
-    }
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 0.2rem;
+        }
 
-    .custom-checkbox {
-        position: relative;
-        padding-left: 2rem;
-        cursor: pointer;
-        user-select: none;
-        display: inline-block;
-    }
+        .checkbox-label {
+            color: white;
+            font-size: 0.9rem;
+            flex: 1;
+        }
 
-    .custom-checkbox input {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-        height: 0;
-        width: 0;
-    }
+        /* Animation de succès */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
 
-    .checkmark {
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 1.5rem;
-        width: 1.5rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        transition: all 0.3s ease;
-    }
-
-    .custom-checkbox input:checked ~ .checkmark {
-        background: var(--accent-blue);
-        border-color: var(--accent-blue);
-    }
-
-    .checkmark:after {
-        content: "";
-        position: absolute;
-        display: none;
-        left: 9px;
-        top: 5px;
-        width: 5px;
-        height: 10px;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-
-    .custom-checkbox input:checked ~ .checkmark:after {
-        display: block;
-    }
-
-    .terms-link {
-        color: var(--accent-blue);
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    .terms-link:hover {
-        color: var(--secondary-blue);
-        text-decoration: underline;
-    }
-
-    /* Animation for zip code validation */
-    @keyframes validZip {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-
-    .zip-valid {
-        animation: validZip 0.3s ease;
-    }
-</style>
-{% endblock %}
-
-{% block form_content %}
-<div class="registration-step active">
-    <!-- Address Field -->
-    <div class="form-group">
-        <label for="address">Complete Address</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-home"></i>
-            <textarea id="address" 
-                      name="address" 
-                      class="form-control {% if form.address.errors %}error{% endif %}" 
-                      rows="3" 
-                      required 
-                      placeholder="Enter your street address">{{ form.address.value|default:'' }}</textarea>
-        </div>
-        {% if form.address.errors %}
-        <div class="error-message">
-            {% for error in form.address.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- City & State Fields -->
-    <div class="form-grid">
-        <div class="form-group">
-            <label for="city">City</label>
-            <div class="input-wrapper">
-                <i class="input-icon fas fa-city"></i>
-                <input type="text" 
-                       id="city" 
-                       name="city" 
-                       class="form-control {% if form.city.errors %}error{% endif %}" 
-                       value="{{ form.city.value|default:'' }}"
-                       required 
-                       placeholder="Enter your city">
+        .success-message {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            animation: successPulse 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <!-- Progress Steps -->
+        <div class="steps-progress">
+            <div class="step complete">
+                1
+                <span class="step-label">Basic Info</span>
             </div>
-            {% if form.city.errors %}
-            <div class="error-message">
-                {% for error in form.city.errors %}
-                    <span>{{ error }}</span>
+            <div class="step complete">
+                2
+                <span class="step-label">Qualifications</span>
+            </div>
+            <div class="step active">
+                3
+                <span class="step-label">Documents</span>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <h1 class="form-title">Address & Documentation</h1>
+            <p class="form-subtitle">Final step - Let's get your location and documentation details</p>
+
+            <!-- Display Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
                 {% endfor %}
             </div>
             {% endif %}
-        </div>
 
-        <div class="form-group">
-            <label for="state">State</label>
-            <div class="input-wrapper">
-                <i class="input-icon fas fa-map-marker-alt"></i>
-                <select id="state" 
-                        name="state" 
-                        class="form-control {% if form.state.errors %}error{% endif %}" 
-                        required>
-                    <option value="">Select your state</option>
-                    {% for state_abbr, state_name in states.items %}
-                    <option value="{{ state_abbr }}" 
-                            {% if form.state.value == state_abbr %}selected{% endif %}>
-                        {{ state_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% if form.state.errors %}
-            <div class="error-message">
-                {% for error in form.state.errors %}
-                    <span>{{ error }}</span>
-                {% endfor %}
-            </div>
-            {% endif %}
+            <!-- Registration Form -->
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Address -->
+                <div class="form-group">
+                    <label for="{{ form.address.id_for_label }}">Street Address</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                    <div class="error-message">{{ form.address.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- City and State Grid -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.city.id_for_label }}">City</label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                        <div class="error-message">{{ form.city.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <select name="state" id="state" class="state-select" required>
+                            <option value="">Select a State</option>
+                            {% for state_code, state_name in states.items %}
+                            <option value="{{ state_code }}" {% if form.state.value == state_code %}selected{% endif %}>
+                                {{ state_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.state.errors %}
+                        <div class="error-message">{{ form.state.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ZIP Code -->
+                <div class="form-group">
+                    <label for="{{ form.zip_code.id_for_label }}">ZIP Code</label>
+                    {{ form.zip_code }}
+                    {% if form.zip_code.errors %}
+                    <div class="error-message">{{ form.zip_code.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- W9 Confirmation -->
+                <div class="checkbox-container">
+                    {{ form.w9_on_file }}
+                    <label for="{{ form.w9_on_file.id_for_label }}" class="checkbox-label">
+                        I confirm that I will provide a completed W-9 form for tax purposes. I understand that this is required before I can receive any payments.
+                    </label>
+                </div>
+                {% if form.w9_on_file.errors %}
+                <div class="error-message">{{ form.w9_on_file.errors.0 }}</div>
+                {% endif %}
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <a href="{% url 'dbdint:interpreter_registration_step2' %}" class="btn btn-previous">
+                        Back to Step 2
+                    </a>
+                    <button type="submit" class="btn btn-next">
+                        Complete Registration
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- ZIP Code Field -->
-    <div class="form-group">
-        <label for="zip_code">ZIP Code</label>
-        <div class="input-wrapper">
-            <i class="input-icon fas fa-map-pin"></i>
-            <input type="text" 
-                   id="zip_code" 
-                   name="zip_code" 
-                   class="form-control {% if form.zip_code.errors %}error{% endif %}" 
-                   value="{{ form.zip_code.value|default:'' }}"
-                   required 
-                   pattern="[0-9]{5}" 
-                   maxlength="5"
-                   placeholder="Enter your ZIP code (5 digits)">
-        </div>
-        {% if form.zip_code.errors %}
-        <div class="error-message">
-            {% for error in form.zip_code.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validation du code ZIP
+            const zipInput = document.querySelector('input[name="zip_code"]');
+            zipInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 5) {
+                    this.value = this.value.slice(0, 5);
+                }
+            });
 
-    <!-- W9 Confirmation -->
-    <div class="form-group">
-        <label class="custom-checkbox">
-            <input type="checkbox" 
-                   id="w9_on_file" 
-                   name="w9_on_file" 
-                   {% if form.w9_on_file.value %}checked{% endif %} 
-                   required>
-            <span class="checkmark"></span>
-            <span class="checkbox-text">
-                I confirm that I will provide a W-9 form and understand that I cannot receive payments without it.
-                <a href="#" class="terms-link" onclick="showW9Info(event)">Learn more</a>
-            </span>
-        </label>
-        {% if form.w9_on_file.errors %}
-        <div class="error-message">
-            {% for error in form.w9_on_file.errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
+            // Animation des champs au focus
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input, textarea, select');
 
-    <!-- Address Preview -->
-    <div class="address-preview">
-        <h4 class="preview-title">Address Preview</h4>
-        <p id="preview-text"></p>
-    </div>
-</div>
-{% endblock %}
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
 
-{% block prev_url %}{% url 'dbdint:interpreter_registration_step2' %}{% endblock %}
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.parentElement.classList.remove('focused');
+                    }
+                });
+            });
 
-{% block extra_js %}
-<script>
-$(document).ready(function() {
-    // Validation du code ZIP
-    const zipInput = document.getElementById('zip_code');
-    zipInput.addEventListener('input', function(e) {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length > 5) value = value.slice(0, 5);
-        this.value = value;
-        
-        if (value.length === 5) {
-            this.classList.add('zip-valid');
-            setTimeout(() => this.classList.remove('zip-valid'), 500);
-        }
-    });
+            // Validation du formulaire avant soumission
+            form.addEventListener('submit', function(e) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
 
-    // Prévisualisation de l'adresse
-    function updateAddressPreview() {
-        const address = document.getElementById('address').value;
-        const city = document.getElementById('city').value;
-        const state = document.getElementById('state');
-        const stateName = state.options[state.selectedIndex].text;
-        const zip = document.getElementById('zip_code').value;
+                requiredFields.forEach(field => {
+                    if (!field.value) {
+                        field.classList.add('error');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('error');
+                    }
+                });
 
-        if (address && city && state.value && zip) {
-            const preview = document.querySelector('.address-preview');
-            const previewText = document.getElementById('preview-text');
-            preview.classList.add('active');
-            previewText.innerHTML = `${address}<br>${city}, ${stateName} ${zip}`;
-        }
-    }
-
-    ['address', 'city', 'state', 'zip_code'].forEach(id => {
-        document.getElementById(id).addEventListener('change', updateAddressPreview);
-        document.getElementById(id).addEventListener('keyup', updateAddressPreview);
-    });
-
-    // Validation du formulaire
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const zip = document.getElementById('zip_code').value;
-        if (!/^\d{5}$/.test(zip)) {
-            e.preventDefault();
-            document.getElementById('zip_code').setCustomValidity('Please enter a valid 5-digit ZIP code');
-        } else {
-            document.getElementById('zip_code').setCustomValidity('');
-        }
-    });
-});
-
-// Information W9
-function showW9Info(e) {
-    e.preventDefault();
-    const info = `A W-9 form (Request for Taxpayer Identification Number and Certification) is required for payment processing. 
-                 You will need to provide this form before receiving any payments for your interpretation services.`;
-    alert(info);
-}
-</script>
-{% endblock %}
+                if (!isValid) {
+                    e.preventDefault();
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'error-message';
+                    errorMessage.textContent = 'Please fill in all required fields';
+                    form.insertBefore(errorMessage, form.firstChild);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
