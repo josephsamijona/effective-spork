@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo">Entreprise</div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Tableau de bord</a></li>
+                    <li><a href="#">Clients</a></li>
+                    <li><a href="#">Projets</a></li>
+                    <li><a href="#">Rapports</a></li>
+                    <li><a href="#">Paramètres</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <header class="header">
+                <h1>Tableau de Bord</h1>
+                <div class="user-profile">
+                    <span>John Doe</span>
+                    <img src="https://via.placeholder.com/40" alt="Profile">
+                </div>
+            </header>
+            <section class="cards">
+                <div class="card">
+                    <h2>Clients</h2>
+                    <p>150</p>
+                </div>
+                <div class="card">
+                    <h2>Projets</h2>
+                    <p>45</p>
+                </div>
+                <div class="card">
+                    <h2>Revenus</h2>
+                    <p>$120,000</p>
+                </div>
+            </section>
+            <section class="charts">
+                <div class="chart">
+                    <h2>Statistiques des Ventes</h2>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="chart">
+                    <h2>Activité Récente</h2>
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

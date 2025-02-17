@@ -1,0 +1,227 @@
+/* Reset et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-blue: #1a237e;
+    --white: #ffffff;
+    --gray-light: #f8f9fa;
+    --gray-text: #666666;
+    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: var(--white);
+    color: #333;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* Header styles */
+.header {
+    background-color: var(--primary-blue);
+    min-height: 200px;
+    position: relative;
+    padding: 25px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header .header-info {
+    position: absolute;
+    top: 25px;
+    right: 40px;
+}
+
+.logo-title-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-space {
+    width: 275px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.logo-space img {
+    width: 275px;
+    height: auto;
+    object-fit: contain;
+}
+
+.main-title {
+    text-align: center;
+    color: var(--primary-blue);
+    font-size: 28px;
+    font-weight: bold;
+    margin: 30px 0;
+    padding: 0 40px;
+}
+
+.header-title {
+    color: var(--white);
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.header-info {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: var(--white);
+}
+
+.header-info div {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+/* Wave effect */
+.wave {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23ffffff' d='M0,64L80,80C160,96,320,128,480,128C640,128,800,96,960,80C1120,64,1280,64,1360,64L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: cover;
+}
+
+/* Contact sections */
+.contact-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 40px;
+    margin-top: 20px;
+}
+
+.contact-box {
+    flex: 1;
+    padding: 25px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+}
+
+.contact-box h2 {
+    color: var(--primary-blue);
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.contact-info a {
+    color: var(--gray-text);
+    text-decoration: none;
+}
+
+.contact-info address {
+    font-style: normal;
+    color: var(--gray-text);
+}
+
+/* Table styles */
+.services-table {
+    width: calc(100% - 80px);
+    margin: 40px auto;
+    border-collapse: collapse;
+    box-shadow: var(--box-shadow);
+}
+
+.services-table th {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+.services-table td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: var(--gray-text);
+}
+
+.services-table tr:nth-child(even) {
+    background-color: var(--gray-light);
+}
+
+/* Footer styles */
+.footer {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.copyright {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.totals {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    font-size: 14px;
+}
+
+.total-row strong {
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Print styles */
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .contact-box {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .services-table {
+        break-inside: auto;
+        page-break-inside: auto;
+    }
+    
+    .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
+}

@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import PasswordChangeForm
 from .models import NotificationPreference
-
+from .models import InterpreterStatement, InterpreterService
 from django.contrib.auth import authenticate
 from .models import User, Interpreter, Language
 from .models import (
@@ -810,3 +810,124 @@ class CustomPasswordtradChangeForm(PasswordChangeForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'form-control'})
+            
+            
+################################payroll generatorclass InterpreterStatementForm(forms.ModelForm):
+    class Meta:
+        model = InterpreterStatement
+        fields = ['name', 'address_line1', 'address_line2', 'phone', 'email']
+        labels = {
+            'name': 'Company Name or Full Name',
+            'address_line1': 'Address Line 1',
+            'address_line2': 'Address Line 2 (Optional)',
+            'phone': 'Phone Number',
+            'email': 'Email Address'
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter company name or full name'
+            }),
+            'address_line1': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Street address'
+            }),
+            'address_line2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Apt, Suite, Building (optional)'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., +1 (555) 555-5555',
+                'type': 'tel'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'email@example.com'
+            })
+        }
+
+class InterpreterStatementForm(forms.ModelForm):
+    class Meta:
+        model = InterpreterStatement
+        fields = ['name', 'address_line1', 'address_line2', 'phone', 'email']
+        labels = {
+            'name': 'Company Name or Full Name',
+            'address_line1': 'Address Line 1',
+            'address_line2': 'Address Line 2 (Optional)',
+            'phone': 'Phone Number',
+            'email': 'Email Address'
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter company name or full name'
+            }),
+            'address_line1': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Street address'
+            }),
+            'address_line2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Apt, Suite, Building (optional)'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., +1 (555) 555-5555',
+                'type': 'tel'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'email@example.com'
+            })
+        }
+
+class InterpreterServiceForm(forms.ModelForm):
+    class Meta:
+        model = InterpreterService
+        fields = ['date', 'source_language', 'target_language', 'rate', 'hours']
+        labels = {
+            'date': 'Service Date',
+            'source_language': 'Source Language',
+            'target_language': 'Target Language',
+            'rate': 'Hourly Rate ($)',
+            'hours': 'Number of Hours'
+        }
+        widgets = {
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'source_language': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., English'
+            }),
+            'target_language': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Spanish'
+            }),
+            'rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'hours': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0.00',
+                'step': '0.25',
+                'min': '0'
+            })
+        }
+
+    def clean_rate(self):
+        rate = self.cleaned_data.get('rate')
+        if rate is not None and rate < 0:
+            raise forms.ValidationError("Rate cannot be negative")
+        return rate
+
+    def clean_hours(self):
+        hours = self.cleaned_data.get('hours')
+        if hours is not None and hours < 0:
+            raise forms.ValidationError("Hours cannot be negative")
+        return hours

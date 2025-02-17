@@ -76,6 +76,15 @@ from .models import (
     QuoteRequest,
     User,ServiceType,AssignmentNotification
 )
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.utils import timezone
+from .forms import InterpreterStatementForm, InterpreterServiceForm
+from .models import InterpreterStatement, InterpreterService
+import random
+import string
+from decimal import Decimal
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1894,3 +1903,86 @@ def get_earnings_data(request, year=None):
         chart_data['assignments'].append(data['count'])
 
     return JsonResponse(chart_data)
+
+
+######################payroll
+def generate_document_id():
+    """Generate a unique document ID with format: DBD-YYYYMMDD-XXXX"""
+    date_str = timezone.now().strftime('%Y%m%d')
+    # Generate 4 random characters (letters and numbers)
+    random_chars = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    return f"DBD-{date_str}-{random_chars}"
+
+def create_statement(request):
+    if request.method == 'POST':
+        statement_form = InterpreterStatementForm(request.POST)
+        
+        if statement_form.is_valid():
+            # Create statement with generated document ID
+            statement = statement_form.save(commit=False)
+            statement.document_id = generate_document_id()
+            statement.save()
+            
+            # Handle multiple services
+            service_data = {}
+            for key, value in request.POST.items():
+                if key.startswith('service-'):
+                    parts = key.split('-')
+                    if len(parts) == 3:
+                        index = parts[1]
+                        field = parts[2]
+                        if index not in service_data:
+                            service_data[index] = {}
+                        service_data[index][field] = value
+            
+            # Create services
+            for service_info in service_data.values():
+                service_form = InterpreterServiceForm(service_info)
+                if service_form.is_valid():
+                    service = service_form.save(commit=False)
+                    service.statement = statement
+                    service.save()
+            
+            messages.success(request, 'Statement created successfully!')
+            return redirect('dbdint:view_contract', pk=statement.pk)
+    else:
+        statement_form = InterpreterStatementForm()
+        service_form = InterpreterServiceForm()
+    
+    return render(request, 'docs/create_statement.html', {
+        'statement_form': statement_form,
+        'service_form': service_form,
+    })
+
+def view_contract(request, pk):
+    statement = get_object_or_404(InterpreterStatement, pk=pk)
+    services = InterpreterService.objects.filter(statement=statement)
+    
+    # Calculate totals
+    total_hours = sum(service.hours or Decimal('0.0') for service in services)
+    total_amount = sum(
+        (service.hours or Decimal('0.0')) * (service.rate or Decimal('0.0')) 
+        for service in services
+    )
+    
+    context = {
+        'document_id': statement.document_id,
+        'current_date': timezone.now().strftime('%B %d, %Y'),
+        'current_year': timezone.now().year,
+        'client_name': statement.name,
+        'client_address_line1': statement.address_line1,
+        'client_address_line2': statement.address_line2,
+        'client_phone': statement.phone,
+        'client_email': statement.email,
+        'services': services,
+        'total_hours': total_hours,
+        'total_amount': total_amount,
+    }
+    
+    return render(request, 'docs/contract.html', context)
+
+
+
+
+
+

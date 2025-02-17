@@ -476,3 +476,76 @@ class AssignmentNotification(models.Model):
         """
         self.is_read = True
         self.save()
+        
+        
+        
+class InterpreterStatement(models.Model):
+    """Modèle pour stocker les informations du statement (section 'TO')"""
+    document_id = models.CharField(max_length=20, unique=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    address_line1 = models.CharField(max_length=255, null=True, blank=True)
+    address_line2 = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name or "Statement sans nom"
+
+    class Meta:
+        verbose_name = "Interpreter Statement"
+        verbose_name_plural = "Interpreter Statements"
+
+class InterpreterService(models.Model):
+    """Modèle pour stocker les informations des services d'interprétation"""
+    statement = models.ForeignKey(
+        InterpreterStatement,
+        on_delete=models.CASCADE,
+        related_name='services'
+    )
+    
+    date = models.DateField(null=True, blank=True)
+    source_language = models.CharField(max_length=50, null=True, blank=True)
+    target_language = models.CharField(max_length=50, null=True, blank=True)
+    rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        null=True,
+        blank=True
+    )
+    hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        null=True,
+        blank=True
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def amount(self):
+        """Calcule le montant total du service"""
+        if self.rate is not None and self.hours is not None:
+            return self.rate * self.hours
+        return None
+
+    def __str__(self):
+        return f"Service du {self.date} pour {self.statement.name}"
+
+    class Meta:
+        verbose_name = "Interpreter Service"
+        verbose_name_plural = "Interpreter Services"
+        ordering = ['-date']
+        
+        
+        
+       
+        
+        
+        
+        

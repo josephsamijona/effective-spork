@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Interpreter Statement - DBD I&T</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .step-container {
+            display: none;
+        }
+        .step-container.active {
+            display: block;
+        }
+        .step-indicator {
+            margin-bottom: 2rem;
+        }
+        .step-indicator .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 auto 10px;
+        }
+        .step-indicator .step.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .step-indicator .step.completed {
+            background-color: #198754;
+            color: white;
+        }
+        .step-title {
+            font-size: 0.875rem;
+            color: #6c757d;
+            text-align: center;
+        }
+        .active .step-title {
+            color: #0d6efd;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold text-primary">New Interpreter Statement</h1>
+            <p class="lead">Please fill out the information below</p>
+        </div>
+
+        <!-- Step Indicators -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-8">
+                <div class="row step-indicator">
+                    <div class="col-4">
+                        <div class="step active">1</div>
+                        <div class="step-title">interpreter Information</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="step">2</div>
+                        <div class="step-title">Services</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="step">3</div>
+                        <div class="step-title">Review</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form method="post" id="interpreter-form">
+                    {% csrf_token %}
+                    
+                    <!-- Step 1: Client Information -->
+                    <div class="step-container active" id="step1">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4">
+                                <h3 class="card-title mb-4">interpreter Information</h3>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ statement_form.name.id_for_label }}" class="form-label">Company Name or Full Name*</label>
+                                    {{ statement_form.name }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ statement_form.address_line1.id_for_label }}" class="form-label">Address Line 1*</label>
+                                    {{ statement_form.address_line1 }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ statement_form.address_line2.id_for_label }}" class="form-label">Address Line 2</label>
+                                    {{ statement_form.address_line2 }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ statement_form.phone.id_for_label }}" class="form-label">Phone Number*</label>
+                                    {{ statement_form.phone }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ statement_form.email.id_for_label }}" class="form-label">Email Address*</label>
+                                    {{ statement_form.email }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-primary" onclick="nextStep(1)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Services -->
+                    <div class="step-container" id="step2">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="card-title mb-0">Interpretation Services</h3>
+                                    <button type="button" class="btn btn-success" id="add-service">
+                                        Add Service
+                                    </button>
+                                </div>
+                                
+                                <div id="services-container">
+                                    <div class="service-form mb-4 p-3 border rounded bg-light">
+                                        <div class="mb-3">
+                                            <label for="{{ service_form.date.id_for_label }}" class="form-label">Service Date*</label>
+                                            {{ service_form.date }}
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ service_form.source_language.id_for_label }}" class="form-label">Source Language*</label>
+                                                {{ service_form.source_language }}
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ service_form.target_language.id_for_label }}" class="form-label">Target Language*</label>
+                                                {{ service_form.target_language }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ service_form.rate.id_for_label }}" class="form-label">Hourly Rate ($)*</label>
+                                                {{ service_form.rate }}
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="{{ service_form.hours.id_for_label }}" class="form-label">Number of Hours*</label>
+                                                {{ service_form.hours }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Previous</button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Review -->
+                    <div class="step-container" id="step3">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4">
+                                <h3 class="card-title mb-4">Review Information</h3>
+                                
+                                <div id="review-content">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Previous</button>
+                            <div>
+                                <button type="submit" class="btn btn-success me-2">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="previewContract()">View Contract</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+
+        function nextStep(step) {
+            if (validateStep(step)) {
+                document.getElementById(`step${step}`).classList.remove('active');
+                document.getElementById(`step${step + 1}`).classList.add('active');
+                updateStepIndicators(step + 1);
+                currentStep = step + 1;
+                
+                if (currentStep === 3) {
+                    updateReviewContent();
+                }
+            }
+        }
+
+        function prevStep(step) {
+            document.getElementById(`step${step}`).classList.remove('active');
+            document.getElementById(`step${step - 1}`).classList.add('active');
+            updateStepIndicators(step - 1);
+            currentStep = step - 1;
+        }
+
+        function updateStepIndicators(activeStep) {
+            const indicators = document.querySelectorAll('.step-indicator .step');
+            indicators.forEach((indicator, index) => {
+                if (index + 1 < activeStep) {
+                    indicator.classList.add('completed');
+                    indicator.classList.remove('active');
+                } else if (index + 1 === activeStep) {
+                    indicator.classList.add('active');
+                    indicator.classList.remove('completed');
+                } else {
+                    indicator.classList.remove('active', 'completed');
+                }
+            });
+        }
+
+        function validateStep(step) {
+            let isValid = true;
+            const stepContainer = document.getElementById(`step${step}`);
+            
+            if (step === 1) {
+                const requiredFields = ['name', 'address_line1', 'phone', 'email'];
+                requiredFields.forEach(field => {
+                    const input = stepContainer.querySelector(`[name="${field}"]`);
+                    if (!input.value) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+            }
+            
+            if (step === 2) {
+                const servicesForms = document.querySelectorAll('.service-form');
+                servicesForms.forEach(form => {
+                    const requiredFields = ['date', 'source_language', 'target_language', 'rate', 'hours'];
+                    requiredFields.forEach(field => {
+                        const input = form.querySelector(`[name$="${field}"]`);
+                        if (!input.value) {
+                            input.classList.add('is-invalid');
+                            isValid = false;
+                        } else {
+                            input.classList.remove('is-invalid');
+                        }
+                    });
+                });
+            }
+            
+            return isValid;
+        }
+
+        function updateReviewContent() {
+            const reviewContent = document.getElementById('review-content');
+            const clientInfo = {
+                name: document.querySelector('[name="name"]').value,
+                address1: document.querySelector('[name="address_line1"]').value,
+                address2: document.querySelector('[name="address_line2"]').value,
+                phone: document.querySelector('[name="phone"]').value,
+                email: document.querySelector('[name="email"]').value
+            };
+
+            const services = [];
+            document.querySelectorAll('.service-form').forEach(form => {
+                services.push({
+                    date: form.querySelector('[name$="date"]').value,
+                    sourceLanguage: form.querySelector('[name$="source_language"]').value,
+                    targetLanguage: form.querySelector('[name$="target_language"]').value,
+                    rate: form.querySelector('[name$="rate"]').value,
+                    hours: form.querySelector('[name$="hours"]').value
+                });
+            });
+
+            let html = `
+                <h4 class="mb-3">Client Information</h4>
+                <dl class="row mb-4">
+                    <dt class="col-sm-3">Name:</dt>
+                    <dd class="col-sm-9">${clientInfo.name}</dd>
+                    
+                    <dt class="col-sm-3">Address:</dt>
+                    <dd class="col-sm-9">
+                        ${clientInfo.address1}<br>
+                        ${clientInfo.address2}
+                    </dd>
+                    
+                    <dt class="col-sm-3">Phone:</dt>
+                    <dd class="col-sm-9">${clientInfo.phone}</dd>
+                    
+                    <dt class="col-sm-3">Email:</dt>
+                    <dd class="col-sm-9">${clientInfo.email}</dd>
+                </dl>
+
+                <h4 class="mb-3">Services</h4>
+            `;
+
+            services.forEach((service, index) => {
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Service ${index + 1}</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Date:</strong> ${service.date}</p>
+                                    <p><strong>Source Language:</strong> ${service.sourceLanguage}</p>
+                                    <p><strong>Target Language:</strong> ${service.targetLanguage}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Rate:</strong> $${service.rate}/hr</p>
+                                    <p><strong>Hours:</strong> ${service.hours}</p>
+                                    <p><strong>Total:</strong> $${(service.rate * service.hours).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            reviewContent.innerHTML = html;
+        }
+
+        function previewContract() {
+            // Will be implemented to show contract preview
+            document.getElementById('interpreter-form').submit();
+        }
+
+        // Add Service Button Handler
+        document.getElementById('add-service').addEventListener('click', function() {
+            const container = document.getElementById('services-container');
+            const serviceForm = container.querySelector('.service-form');
+            const newService = serviceForm.cloneNode(true);
+            
+            // Reset form fields
+            const inputs = newService.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.value = '';
+                const newId = `${input.id}-${container.children.length}`;
+                input.id = newId;
+                input.name = `service-${container.children.length}-${input.name.split('-').pop()}`;
+                
+                const label = newService.querySelector(`label[for="${input.id}"]`);
+                if (label) {
+                    label.setAttribute('for', newId);
+                }
+            });
+            
+            container.appendChild(newService);
+        });
+        
+        // Initialize form validation styles
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('interpreter-form');
+            const inputs = form.querySelectorAll('input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.value) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

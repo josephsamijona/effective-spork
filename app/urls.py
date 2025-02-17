@@ -133,4 +133,8 @@ urlpatterns = [
     path('interpreter/assignments/notifications/mark-read/',
          views.mark_assignments_as_read,
          name='mark_assignments_read'),
+    #payroll
+    path('statement/create/', views.create_statement, name='create_statement'),
+    path('statement/<int:pk>/contract/', views.view_contract, name='view_contract'),
+    
 ]
